@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>extract</title></head>
+<body>
+<pre id="out">loading…</pre>
+<script>
+const out = document.getElementById('out');
+window.__pages = [];
+window.__error = null;
+
+function ascii85(str) {
+  const bytes = [];
+  let acc = 0, n = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str[i];
+    if (c === '~') break;
+    if (c === '\n' || c === '\r' || c === ' ' || c === '\t' || c === '\f' || c === '\0') continue;
+    if (c === 'z' && n === 0) { bytes.push(0, 0, 0, 0); continue; }
+    const v = c.charCodeAt(0) - 33;
+    if (v < 0 || v > 84) continue;
+    acc = acc * 85 + v;
+    n++;
+    if (n === 5) {
+      bytes.push(Math.floor(acc / 16777216) % 256, Math.floor(acc / 65536) % 256, Math.floor(acc / 256) % 256, acc % 256);
+      acc = 0; n = 0;
+    }
+  }
+  if (n > 0) {
+    for (let k = n; k < 5; k++) acc = acc * 85 + 84;
+    const b = [Math.floor(acc / 16777216) % 256, Math.floor(acc / 65536) % 256, Math.floor(acc / 256) % 256, acc % 256];
+    for (let k = 0; k < n - 1; k++) bytes.push(b[k]);
+  }
+  return new Uint8Array(bytes);
+}
+
+async function inflate(u8) {
+  const ds = new DecompressionStream('deflate');
+  const stream = new Blob([u8]).stream().pipeThrough(ds);
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+function unesc(s) {
+  return s.replace(/\\(n|r|t|b|f|\(|\)|\\|[0-7]{1,3})/g, (m, g) => {
+    switch (g) {
+      case 'n': return '\n';
+      case 'r': return '\r';
+      case 't': return '\t';
+      case 'b': return '\b';
+      case 'f': return '\f';
+      case '(': return '(';
+      case ')': return ')';
+      case '\\': return '\\';
+    }
+    return String.fromCharCode(parseInt(g, 8));
+  });
+}
+
+function extractText(content) {
+  let out = '';
+  let line = '';
+  let i = 0;
+  const flush = () => { out += line.replace(/\s+$/, '') + '\n'; line = ''; };
+  while (i < content.length) {
+    const ch = content[i];
+    if (ch === '(') {
+      let j = i + 1, depth = 1, buf = '';
+      while (j < content.length) {
+        const c = content[j];
+        if (c === '\\') { buf += c + (content[j + 1] || ''); j += 2; continue; }
+        if (c === '(') depth++;
+        if (c === ')') { depth--; if (depth === 0) break; }
+        buf += c; j++;
+      }
+      line += unesc(buf);
+      i = j + 1;
+      continue;
+    }
+    if (ch === '\n') { flush(); i++; continue; }
+    i++;
+  }
+  flush();
+  return out;
+}
+
+(async () => {
+  try {
+    const res = await fetch('./Vachan_AI_Agent_Plan.pdf');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const buf = new Uint8Array(await res.arrayBuffer());
+    const raw = new TextDecoder('latin1').decode(buf);
+    const re = /stream\r?\n([\s\S]*?)endstream/g;
+    let m, idx = 0;
+    while ((m = re.exec(raw)) !== null) {
+      const chunk = m[1];
+      if (!chunk.trimStart().startsWith('G')) continue;
+      const inflated = await inflate(ascii85(chunk));
+      window.__pages.push(extractText(new TextDecoder('latin1').decode(inflated)));
+      idx++;
+    }
+    out.textContent = 'pages=' + idx + '\n\n' + window.__pages.join('\n===== PAGE BREAK =====\n').slice(0, 3000);
+  } catch (e) {
+    window.__error = String(e && e.message || e);
+    out.textContent = 'ERROR: ' + window.__error;
+  }
+})();
+</script>
+</body>
+</html>

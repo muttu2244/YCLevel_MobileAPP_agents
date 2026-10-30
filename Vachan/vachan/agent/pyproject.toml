@@ -1,0 +1,30 @@
+[project]
+name = "vachan"
+version = "0.1.0"
+description = "Vachan — WhatsApp-native agent team that extracts promises, chases them and scores vendor reliability"
+requires-python = ">=3.10"
+# Zero required dependencies on purpose: the pipeline, the store and the CLI
+# run on the standard library alone, so `python -m vachan demo` works on a
+# fresh machine with nothing installed.
+dependencies = []
+
+[project.optional-dependencies]
+# Hosted Postgres (Neon/Supabase) instead of the local SQLite file.
+postgres = ["psycopg[binary]>=3.1"]
+# Telegram intake prototype.
+telegram = ["python-telegram-bot>=21"]
+# Optional tracing: every agent run, prompt and cost, on Langfuse's free tier.
+tracing = ["langfuse>=2"]
+# Wire the real Microsoft Agent Framework chat clients in place of llm.py.
+agents = ["agent-framework"]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[tool.setuptools.packages.find]
+include = ["vachan*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

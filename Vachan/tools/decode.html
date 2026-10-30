@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>decode</title></head>
+<body>
+<pre id="out">loading…</pre>
+<script type="text/plain" id="s16">Gatm992jS!&AI=/lk,UNGU6R[NbNd':8U;HoYa1<Pf0OCWNAG]pQ^u]3'^B=[6:rfqtbKN?-<M)^!XUD!oQuYB9rlp+diCd,_T\2(WkUe@&"/+UR&I$&qBp&.%kDO:X//&_&W"J=Ga7P(5;_JI97\*a8"6NddpKY"C[-iAD$V\hnA1<stSQ2-8lo,R[.<*6:l#60)pN>;amF3p(WEgX_r0/u_7s&kU$9crOl2"=ZfF!^RmI!=(s%]jd=OC&Oi\:`p?:$91IG"On?e-NbR1.'PHNH!osHCM`rhlP<,[s2gB`6JlnoHlZu\I:E?9(tuEp/JJ>oke9)n#5G2%(<!J#G"Ft2haBlANo4THSoq`a?^F&H8n-l]&c_I8b#5nh+9KhZgD=tM\A#%iU't2Kp0lo!XPrP(j<(G#8(:2^(l/$ba7H>-$&u)0&!n7kg[Ta.DoN8^NO(`'c[RU[8*#d^B@BkUiSg`_q=Jc82+CB7WaT(H%;B.N-=AT759.Qr?Suf/e7G@q?"d/$K;hkNRfap5AqBeMp#8j1qk726H:2#h<O"C0WcEKWCV=g=5ZYa%B"k@d0MG2APmp\=-p+_E9?RJ)JS8GcN,#^[1d+"`GcmM2\5N"<Ftd";2<k8Ge._U9rS*E&j64$4[8r!Ph_c@%HJC3fPK[,*/-[Bn#:U5#+t>1S&<oTl^0_?98,]eX`/BsLea@IfIlXBa[Dc/^G_+JJ7BPUiqJDm+&p2Zp&AbLrGb)Ws4rD4RQ8^_h^6<=XD2fQ[^Y^O>YG@rcqlS<H=?9'hIg$g6;;9=_r!e9CB.qk'~></script>
+<script>
+function ascii85(str){
+  const bytes=[]; let acc=0,n=0;
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(c==='~') break;
+    if(/\s/.test(c)) continue;
+    if(c==='z'&&n===0){bytes.push(0,0,0,0);continue;}
+    const v=c.charCodeAt(0)-33;
+    if(v<0||v>84) continue;
+    acc=acc*85+v; n++;
+    if(n===5){bytes.push(Math.floor(acc/16777216)%256,Math.floor(acc/65536)%256,Math.floor(acc/256)%256,acc%256);acc=0;n=0;}
+  }
+  if(n>0){for(let k=n;k<5;k++) acc=acc*85+84;
+    const b=[Math.floor(acc/16777216)%256,Math.floor(acc/65536)%256,Math.floor(acc/256)%256,acc%256];
+    for(let k=0;k<n-1;k++) bytes.push(b[k]);}
+  return new Uint8Array(bytes);
+}
+window.__report={};
+(async()=>{
+  const raw=document.getElementById('s16').textContent;
+  window.__report.srcLen=raw.length;
+  const dec=ascii85(raw);
+  window.__report.decodedBytes=dec.length;
+  try{
+    const st=new Blob([dec]).stream().pipeThrough(new DecompressionStream('deflate'));
+    const inf=new Uint8Array(await new Response(st).arrayBuffer());
+    window.__report.inflate='ok';
+    window.__report.inflatedBytes=inf.length;
+    window.__report.text=new TextDecoder('latin1').decode(inf).slice(0,900);
+  }catch(e){ window.__report.inflate='FAIL: '+e.message; }
+  document.getElementById('out').textContent=JSON.stringify(window.__report,null,1);
+})();
+</script>
+</body>
+</html>

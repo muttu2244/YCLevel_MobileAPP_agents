@@ -1,0 +1,27 @@
+# Villa 42 — site group. A realistic week of Hinglish site chat.
+#
+# Format:  [D-n, HH:MM, kind] Name: message
+#   D-0 = today, D-3 = three days ago (dates are resolved when you run it, so
+#   this sample never goes stale).
+#   kind is optional: voice | photo. A voice line's text is its transcript.
+# Lines starting with # are ignored.
+#
+# The point of this file is the mix: two firm promises with dates, one
+# question that is NOT a promise, one answer that only makes sense with the
+# question above it, one voice note, one photo that closes a promise, and the
+# owner promising money — which is the promise owners actually forget.
+
+[D-3, 09:10] Imran bhai: bhaiya aaj aayenge?
+[D-3, 09:40] Rakesh (me): haan aaj aa jao
+[D-3, 18:31] Imran bhai: Sir laminate ka order kar diya, kal shaam tak site pe pahunch jayega
+[D-3, 18:33] Rakesh (me): theek hai, aur wardrobe fitting?
+[D-3, 18:40] Imran bhai: fitting Monday tak pakka
+[D-3, 19:02] Rakesh (me): 40,000 balance main 20th ko de dunga, tension mat lo
+[D-2, 11:05] Painter Ramesh: sir putty ka material khatam ho gaya, kal subah tak arrange kar dunga
+[D-2, 12:20] Mrs Iyer: kitchen ka colour sample bhej dijiye aaj
+[D-2, 13:00] Rakesh (me): aaj shaam tak bhej dunga
+[D-1, 09:15, voice] Imran bhai: haan sir wo drawer channel ka jo problem tha na, wo maine order kar diya hai Bombay se, Tuesday tak aa jayega pakka
+[D-1, 16:40, photo] Imran bhai: 8 sheet laminate site pe pahunch gaya
+[D-1, 17:10] Ravi Electrician: wiring ka kaam parso tak kar dunga
+[D-0, 10:05] Mrs Iyer: kitchen kab tak ready hoga?
+[D-0, 10:30] Painter Ramesh: polish start kar dunga

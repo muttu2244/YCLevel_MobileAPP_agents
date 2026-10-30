@@ -1,0 +1,2749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vachan — local</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#151a22; --panel2:#1b2230; --line:#26303f;
+    --txt:#e6ebf2; --dim:#8b98ab; --accent:#ffb454; --ok:#3ddc97;
+    --warn:#ffb454; --bad:#ff6b6b; --info:#6ea8fe;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:14px;line-height:1.5}
+  header{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel)}
+  h1{font-size:17px;margin:0;letter-spacing:.3px}
+  h1 span{color:var(--accent)}
+  .badge{font-size:11px;padding:3px 8px;border-radius:20px;border:1px solid var(--line);color:var(--dim)}
+  .badge.ok{color:var(--ok);border-color:#1d4d3c}
+  .badge.mock{color:var(--warn);border-color:#4d3c1d}
+  .spacer{flex:1}
+  nav{display:flex;gap:2px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--panel);overflow-x:auto}
+  nav button{background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);padding:11px 14px;cursor:pointer;font-size:13px;font-family:inherit;white-space:nowrap}
+  nav button.on{color:var(--txt);border-bottom-color:var(--accent)}
+  main{padding:18px 20px 60px;max-width:1180px}
+  section{display:none}
+  section.on{display:block}
+  .grid{display:grid;gap:12px}
+  .cols-4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .stat{font-size:24px;font-weight:600}
+  .stat.bad{color:var(--bad)} .stat.warn{color:var(--warn)} .stat.ok{color:var(--ok)}
+  .label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+  h2{font-size:15px;margin:22px 0 10px}
+  h3{font-size:13px;margin:0 0 8px}
+  button.btn{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer;font-family:inherit;font-size:13px}
+  button.btn:hover{border-color:var(--accent)}
+  button.btn.primary{background:var(--accent);color:#20160a;border-color:var(--accent);font-weight:600}
+  button.btn.tiny{padding:3px 8px;font-size:11px}
+  textarea,input,select{width:100%;background:#0b0e13;color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:9px;font-family:inherit;font-size:13px}
+  textarea{min-height:120px;font-family:var(--mono);font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  tr:last-child td{border-bottom:none}
+  .pill{font-size:11px;padding:2px 7px;border-radius:20px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+  .pill.overdue{color:var(--bad);border-color:#5a2626;background:#2a1414}
+  .pill.today,.pill.upcoming{color:var(--warn);border-color:#4d3c1d}
+  .pill.done{color:var(--ok);border-color:#1d4d3c;background:#12251d}
+  .pill.late{color:var(--bad);border-color:#5a2626}
+  .pill.missed{color:#c98bff;border-color:#3d2a5a}
+  .pill.nodate{color:var(--dim)}
+  .pill.we{color:var(--info);border-color:#243a5e}
+  .who{font-weight:600}
+  .quote{color:var(--dim);font-size:12px;font-style:italic}
+  .mono{font-family:var(--mono);font-size:12px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .msg{padding:8px 10px;border-radius:8px;background:var(--panel2);margin-bottom:6px;border:1px solid var(--line)}
+  .msg .meta{font-size:11px;color:var(--dim);display:flex;gap:8px;flex-wrap:wrap}
+  .msg.out{background:#1a2130;border-color:#2b3446}
+  .voice{border-left:3px solid var(--info)}
+  .bar{height:6px;background:#0b0e13;border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+  .bar > i{display:block;height:100%;background:var(--accent)}
+  .score{font-size:30px;font-weight:700;line-height:1}
+  .band{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line)}
+  .band.strong{color:var(--ok);border-color:#1d4d3c}
+  .band.ok{color:var(--info);border-color:#243a5e}
+  .band.watch{color:var(--warn);border-color:#4d3c1d}
+  .band.risk{color:var(--bad);border-color:#5a2626}
+  .band.provisional,.band.unscored{color:var(--dim)}
+  .note{color:var(--dim);font-size:12px}
+  .banner{border:1px solid #4d3c1d;background:#241c0f;color:#ffd9a0;padding:10px 12px;border-radius:8px;margin-bottom:14px;font-size:13px}
+  .banner.bad{border-color:#5a2626;background:#2a1414;color:#ffb3b3}
+  .kbd{font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:11px}
+  .split{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+  @media(max-width:820px){.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>वचन <span>Vachan</span></h1>
+  <span class="badge ok">local · no install</span>
+  <span class="badge" id="modeBadge">extractor: mock</span>
+  <span class="badge" id="bizBadge">—</span>
+  <span class="spacer"></span>
+  <button class="btn tiny" data-action="seed">Load sample business</button>
+  <button class="btn tiny" data-action="reset">Reset</button>
+</header>
+
+<nav>
+  <button data-tab="today" class="on">Today</button>
+  <button data-tab="inbox">Inbox</button>
+  <button data-tab="promises">Promises</button>
+  <button data-tab="followups">Follow-ups</button>
+  <button data-tab="vendors">Vendors</button>
+  <button data-tab="agents">Agent team</button>
+  <button data-tab="db">Database</button>
+  <button data-tab="settings">Settings</button>
+</nav>
+
+<main>
+  <div id="alert"></div>
+
+  <!-- TODAY -->
+  <section id="tab-today" class="on">
+    <div class="grid cols-4">
+      <div class="card"><div class="label">Open promises</div><div class="stat" id="s-open">0</div></div>
+      <div class="card"><div class="label">Overdue</div><div class="stat bad" id="s-overdue">0</div></div>
+      <div class="card"><div class="label">Follow-ups queued</div><div class="stat warn" id="s-queued">0</div></div>
+      <div class="card"><div class="label">Kept on time</div><div class="stat ok" id="s-ontime">—</div></div>
+    </div>
+    <h2>What Vachan would say today</h2>
+    <div id="today-actions" class="grid" style="gap:10px"></div>
+    <h2>Overdue &amp; due today</h2>
+    <div id="today-list"></div>
+  </section>
+
+  <!-- INBOX -->
+  <section id="tab-inbox">
+    <div class="split">
+      <div class="card">
+        <h3>Paste a chat, a forwarded message, or a voice-note transcript</h3>
+        <p class="note">This is the WhatsApp workaround from the plan: Vachan never silently reads a personal group. You give it text — a forwarded thread, a <span class="kbd">.txt</span> export, a Telegram message, or the transcript of a voice note — and it does the rest.</p>
+        <textarea id="ingestText" placeholder="[15/03/26, 6:31 PM] Imran bhai: Sir laminate kal shaam tak aa jayega&#10;[15/03/26, 6:33 PM] Rakesh (me): theek hai"></textarea>
+        <div class="row" style="margin-top:10px">
+          <select id="ingestChannel" style="width:auto">
+            <option value="whatsapp">WhatsApp (forward / export)</option>
+            <option value="telegram">Telegram prototype</option>
+            <option value="manual">Manual note</option>
+          </select>
+          <button class="btn primary" data-action="ingest">Ingest &amp; extract promises</button>
+          <label class="note"><input type="checkbox" id="asVoice" style="width:auto"> treat as voice-note transcript</label>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Extraction result</h3>
+        <div id="extractResult" class="note">Nothing ingested yet.</div>
+      </div>
+    </div>
+    <h2>Message log <span class="note" id="msgCount"></span></h2>
+    <div id="msgLog"></div>
+  </section>
+
+  <!-- PROMISES -->
+  <section id="tab-promises">
+    <h2>Promise ledger</h2>
+    <p class="note">Who promised what, by when. <span class="pill we">we_owe</span> rows are the owner's own promises — the ones that quietly cost clients.</p>
+    <div class="row" style="margin-bottom:10px">
+      <input id="pSearch" placeholder="Search who, what or the original words" style="max-width:320px">
+      <select id="pStatus" style="width:auto">
+        <option value="all">Every status</option>
+        <option value="open">Open</option>
+        <option value="overdue">Overdue</option>
+        <option value="nodate">Needs a date</option>
+        <option value="done">Done / late</option>
+        <option value="missed">Missed</option>
+      </select>
+      <select id="pDir" style="width:auto">
+        <option value="all">Both directions</option>
+        <option value="they_owe">They owe us</option>
+        <option value="we_owe">We owe them</option>
+      </select>
+      <span class="note" id="pCount"></span>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+      <table>
+        <thead><tr><th>Who</th><th>What</th><th>Due</th><th>Status</th><th>Conf.</th><th></th></tr></thead>
+        <tbody id="promiseRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FOLLOW UPS -->
+  <section id="tab-followups">
+    <h2>Follow-ups Vachan drafted</h2>
+    <p class="note">Nothing is sent automatically. You approve, edit or skip — auto-send is a per-project opt-in for later.</p>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn" data-action="planFollowups">Plan follow-ups for overdue promises</button>
+      <button class="btn" data-action="simulateReplies">Simulate vendor replies</button>
+      <button class="btn" data-action="refresh">Recompute statuses &amp; scores</button>
+    </div>
+    <div id="followupList"></div>
+  </section>
+
+  <!-- VENDORS -->
+  <section id="tab-vendors">
+    <h2>Vendor reliability</h2>
+    <p class="note">Computed with the versioned formula in <span class="kbd">prompts/04_reliability.md</span> — deterministic, never model-invented. Snapshots are kept so a vendor can contest a score later.</p>
+    <div id="vendorCards"></div>
+  </section>
+
+  <!-- AGENTS -->
+  <section id="tab-agents">
+    <h2>The agent team</h2>
+    <p class="note">Each agent is a prompt file plus a thin runner. In this local build the runners are built into this page (mock mode) or call your own model endpoint in LLM mode.</p>
+    <div id="agentList"></div>
+    <h2>Self-test</h2>
+    <p class="note">The pipeline checks itself: date parsing, extractor rules, closing, de-duplication and the score formula, run against short throwaway scenarios. It works on a copy of your data and puts everything back afterwards. Run it after any change — it is the reason this build does not need a test server.</p>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn primary" data-action="selftest">Run the test suite</button>
+      <span class="note" id="testSummary"></span>
+    </div>
+    <div id="testResults"></div>
+    <h2>Recent agent runs</h2>
+    <div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>Agent</th><th>Model</th><th>Status</th><th>What it did</th><th>At</th></tr></thead><tbody id="runRows"></tbody></table>
+    </div>
+  </section>
+
+  <!-- DB -->
+  <section id="tab-db">
+    <h2>Local data</h2>
+    <p class="note">This local build persists to your browser. The real deployment uses the Postgres schema in <span class="kbd">db/schema.sql</span> — the same tables these objects map onto.</p>
+    <div class="row">
+      <button class="btn" data-action="exportJson">Download JSON backup</button>
+      <label class="btn" style="cursor:pointer">Import JSON<input type="file" id="importFile" accept=".json" style="display:none"></label>
+      <button class="btn" data-action="showSql">Show SQL for the current data</button>
+    </div>
+
+    <h2>Shared database <span class="note">(Supabase — optional)</span></h2>
+    <p class="note">This page works entirely offline. Connecting a Supabase project turns the same ledger into a shared one: the agents, your laptop and your phone all read the same rows. The schema is in <span class="kbd">db/schema.sql</span> and the row-level security that makes a public anon key safe is in <span class="kbd">db/supabase_rls.sql</span>. Your anon key is public by design; your password and tokens are never written into a backup.</p>
+    <div id="cloudPanel"></div>
+
+    <h3 style="margin-top:16px">State</h3>
+    <div class="card mono" id="dbStats"></div>
+    <h3 style="margin-top:16px">Promise events <span class="note">(the audit trail behind every score)</span></h3>
+    <div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>When</th><th>Promise</th><th>Event</th><th>Detail</th><th>By</th></tr></thead><tbody id="eventRows"></tbody></table>
+    </div>
+    <h3 style="margin-top:16px">SQL</h3>
+    <textarea id="sqlOut" readonly style="min-height:180px"></textarea>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-settings">
+    <h2>Model</h2>
+    <p class="note">Everything works with <b>mock</b> mode — a deterministic rule-based extractor, no key, no network. Switch to a real model when you have one. All three free options from the plan are supported.</p>
+    <div class="card grid" style="gap:12px">
+      <div>
+        <div class="label">Extractor mode</div>
+        <select id="setMode">
+          <option value="mock">mock — built-in rules, offline, no key</option>
+          <option value="ollama">ollama — local model on your machine</option>
+          <option value="openai">openai-compatible — GitHub Models / Groq / Gemini / Foundry</option>
+        </select>
+      </div>
+      <div>
+        <div class="label">Base URL</div>
+        <input id="setBase" placeholder="http://localhost:11434">
+      </div>
+      <div>
+        <div class="label">Model</div>
+        <input id="setModel" placeholder="llama3.1">
+      </div>
+      <div>
+        <div class="label">API key (stored only in this browser — never in this project)</div>
+        <input id="setKey" type="password" placeholder="leave empty for ollama / mock">
+      </div>
+      <div class="row"><button class="btn primary" data-action="saveSettings">Save</button><span class="note" id="settingsSaved"></span></div>
+    </div>
+    <h2>Business</h2>
+    <div class="card grid" style="gap:12px">
+      <div><div class="label">Business name</div><input id="setBiz"></div>
+      <div><div class="label">Owner name</div><input id="setOwner"></div>
+      <div><div class="label">Project / site</div><input id="setProject"></div>
+      <div class="row"><button class="btn primary" data-action="saveBusiness">Save</button></div>
+    </div>
+    <h2>Where this fits the real stack</h2>
+    <p class="note">Local build: this page + your browser. Real build: this same pipeline as a service — Postgres (<span class="kbd">db/schema.sql</span>), the prompts in <span class="kbd">prompts/</span>, the Python agents in <span class="kbd">agent/vachan/</span>, a Telegram or Cloud-API webhook for intake, and Langfuse for tracing. See <span class="kbd">docs/INFRA.md</span>.</p>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ==========================================================================
+   Vachan — local single-file build.
+   Mirrors agent/vachan/*.py so you can swap mock rules for a real model
+   without changing the data shapes. Prompts live in prompts/*.md.
+   ========================================================================== */
+
+const OWNER = "Rakesh (me)";
+
+/* ---------- tiny helpers ---------- */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const uid = (p) => p + "_" + Math.random().toString(36).slice(2, 10);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = (n) => String(n).padStart(2, "0");
+const ymd = (d) => { const x = new Date(d); return x.getFullYear() + "-" + pad(x.getMonth() + 1) + "-" + pad(x.getDate()); };
+const dayStart = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const at = (d, hhmm) => { const x = new Date(d); const [h, m] = hhmm.split(":").map(Number); x.setHours(h, m, 0, 0); return x; };
+/* Accepts Date or "YYYY-MM-DD". A bare date string must be read as a LOCAL
+   day: new Date("2026-03-13") is UTC midnight and shifts the day west of GMT. */
+const asDay = (v) => {
+  if (v instanceof Date) return dayStart(v);
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  return dayStart(new Date(v));
+};
+const daysBetween = (a, b) => Math.round((asDay(b) - asDay(a)) / 86400000);
+const nowIso = () => new Date().toISOString();
+const round = (n, p = 1) => Math.round(n * Math.pow(10, p)) / Math.pow(10, p);
+const money = (n) => "₹" + Number(n).toLocaleString("en-IN");
+const plural = (n, word) => n + " " + word + (n === 1 ? "" : "s");
+
+/* Local persistence: on file:// some browsers block localStorage, so fall back. */
+const store = (() => {
+  let mem = null;
+  try { localStorage.setItem("__v", "1"); localStorage.removeItem("__v"); return localStorage; }
+  catch (e) { return { getItem: () => mem, setItem: (k, v) => { mem = v; }, removeItem: () => { mem = null; } }; }
+})();
+
+const KEY = "vachan.state.v2";
+const LEGACY_KEYS = ["vachan.state.v1"];
+const STATE_VERSION = 2;
+const AUTO_MISS_DAYS = 7;   // nothing arrived this long after the promise
+const MAX_EVENTS = 500;
+const SAVE_ERROR = "Could not save — this browser's storage is full or blocked. Download a JSON backup from the Database tab before closing.";
+
+/* ---------- state ---------- */
+let S = null;
+
+function blankState() {
+  const today = new Date();
+  return {
+    version: STATE_VERSION,
+    meta: {
+      business: "Sharma Interiors",
+      owner: OWNER,
+      project: "Villa 42 — kitchen & wardrobes",
+      site: "Villa 42, Whitefield",
+      client: "Mrs Iyer",
+      timezone: "Asia/Kolkata"
+    },
+    settings: { mode: "mock", baseUrl: "http://localhost:11434", model: "llama3.1", apiKey: "" },
+    contacts: [],
+    conversations: [],
+    messages: [],
+    promises: [],
+    followUps: [],
+    proofs: [],
+    runs: [],
+    events: [],
+    scoreHistory: [],
+    seededAt: null,
+    demoToday: ymd(today)
+  };
+}
+
+/* Every shape change goes through here, so a backup taken today still opens
+   after the next change. Anything missing is repaired rather than rejected:
+   render() must never be able to crash on data an older build wrote. */
+function migrate(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const s = input;
+  for (const k of ["contacts", "conversations", "messages", "promises",
+                   "followUps", "proofs", "runs", "events", "scoreHistory"]) {
+    if (!Array.isArray(s[k])) s[k] = [];
+  }
+  if (!s.meta || typeof s.meta !== "object") s.meta = blankState().meta;
+  if (!s.settings || typeof s.settings !== "object") s.settings = blankState().settings;
+  if (!s.meta.owner) s.meta.owner = OWNER;
+  for (const p of s.promises) {
+    if (!Array.isArray(p.sourceMessageIds)) p.sourceMessageIds = [];
+    if (typeof p.attempts !== "number") p.attempts = 0;
+    if (typeof p.reschedules !== "number") p.reschedules = 0;
+    if (!p.status) p.status = "open";
+  }
+  s.version = STATE_VERSION;
+  s.demoToday = ymd(new Date());
+  return s;
+}
+
+function loadState() {
+  for (const key of [KEY].concat(LEGACY_KEYS)) {
+    let raw = null;
+    try { raw = store.getItem(key); } catch (e) { raw = null; }
+    if (!raw) continue;
+    try {
+      const s = migrate(JSON.parse(raw));
+      if (s) { S = s; if (key !== KEY) save(); return; }
+    } catch (e) {
+      // Never destroy the bad payload: an owner who lost a week of promises
+      // deserves the chance to recover them by hand.
+      try { store.setItem(key + ".broken", raw); } catch (_) {}
+    }
+  }
+  S = blankState();
+}
+
+let lastSaveOk = true;
+function save() {
+  try { store.setItem(KEY, JSON.stringify(S)); lastSaveOk = true; return true; }
+  catch (e) { lastSaveOk = false; return false; }
+}
+
+/* An append-only trail, mirroring the promise_events table. This is what lets
+   a vendor contest a score: every status change has an author and a time. */
+function logEvent(promiseId, kind, detail, actor) {
+  const at = nowIso();
+  S.events.unshift({
+    id: uid("ev"), promiseId: promiseId || null, kind: kind,
+    detail: detail || null, actor: actor || "agent", at: at
+  });
+  if (S.events.length > MAX_EVENTS) S.events.length = MAX_EVENTS;
+  /* The audit trail doubles as the sync clock: the moment a promise changed is
+     the moment we recorded why. Every status change logs an event, so nothing
+     is stamped twice and nothing drifts. */
+  if (promiseId) {
+    const p = S.promises.find(x => x.id === promiseId);
+    if (p) p.updatedAt = at;
+  }
+}
+
+/* ==========================================================================
+   1. INGESTION — WhatsApp export, forwarded text, Telegram, voice transcripts
+   ========================================================================== */
+
+/* "Ramesh" contains "me", so the owner test has to be anchored, not a substring
+   match — otherwise every vendor called ...mesh/...mela is read as the owner. */
+function isOwnerName(name) {
+  const n = String(name || "").trim();
+  return n === ((S.meta && S.meta.owner) || OWNER) || /\(me\)/i.test(n) || /^me$/i.test(n) || /^rakesh\b/i.test(n);
+}
+
+/* "Painter Ramesh" is Ramesh, not "Painter". */
+function nickName(who) {
+  const parts = String(who || "").split(/\s+/).filter(Boolean);
+  const role = /^(painter|carpenter|electrician|plumber|mistri|sir|mr\.?|mrs\.?|ms\.?|the|bhaiya|bhai|ji)$/i;
+  const rest = parts.filter(p => !role.test(p));
+  return rest[0] || parts[0] || String(who);
+}
+
+function contactFor(name, kind) {
+  const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const key = norm(name);
+  let c = S.contacts.find(x => norm(x.name) === key);
+  if (c) { if (kind && c.kind === "unknown") c.kind = kind; return c; }
+  const guessRole = isOwnerName(name) ? "owner"
+    : /mr|mrs|ms|iyer|client/i.test(name) ? "client"
+    : /electrician|painter|carpenter|plumber|bhai|mistri|imran|ramesh|ravi|tiles|ply/i.test(name) ? "vendor"
+    : "unknown";
+  c = { id: uid("ct"), name: String(name).trim(), kind: kind || guessRole, trade: null, phone: null };
+  S.contacts.push(c);
+  return c;
+}
+
+/* WhatsApp export line:  [15/03/26, 6:31 PM] Imran bhai: text
+   and the older form:    15/03/26, 18:31 - Imran bhai: text          */
+const WA_LINE = /^\[?(\d{1,2}\/\d{1,2}\/\d{2,4}),\s*(\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?)\]?\s*(?:-\s*)?([^:]{1,40}):\s*(.*)$/i;
+
+function parseChatText(text) {
+  const out = [];
+  const lines = String(text).split(/\r?\n/);
+  let pending = null;
+  for (const line of lines) {
+    const m = line.match(WA_LINE);
+    if (m) {
+      if (pending) out.push(pending);
+      let [, d, t, who] = m;
+      let body = m[4];
+      const [dd, mm, yy] = d.split("/").map(Number);
+      const year = yy < 100 ? 2000 + yy : yy;
+      let hour = 12, min = 0;
+      const tm = t.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap])?/i);
+      if (tm) {
+        hour = Number(tm[1]); min = Number(tm[2]);
+        if (tm[4]) { const pm = /p/i.test(tm[4]); if (pm && hour !== 12) hour += 12; if (!pm && hour === 12) hour = 0; }
+      }
+      const when = new Date(year, mm - 1, dd, hour, min, 0, 0);
+      pending = { who: who.trim(), body: body.trim(), when };
+    } else if (pending) {
+      if (/^\s*<Media omitted>\s*$/i.test(line)) pending.body += " [media]";
+      else pending.body += " " + line.trim();
+    } else if (line.trim()) {
+      // plain "Name: message" or bare note
+      const p = line.match(/^([^:]{1,40}):\s*(.+)$/);
+      if (p) out.push({ who: p[1].trim(), body: p[2].trim(), when: new Date() });
+      else out.push({ who: "Owner", body: line.trim(), when: new Date() });
+    }
+  }
+  if (pending) out.push(pending);
+  return out;
+}
+
+/* Voice-note transcript may arrive as "speaker: text" lines too. */
+function ingest(text, channel, isVoice) {
+  const parsed = parseChatText(text);
+  if (!parsed.length) return [];
+  const conv = (() => {
+    let c = S.conversations.find(x => x.channel === channel && x.kind === "group");
+    if (!c) { c = { id: uid("cv"), channel, kind: "group", title: channel + " (imported)", source: channel === "telegram" ? "telegram" : "export" }; S.conversations.push(c); }
+    return c;
+  })();
+  const made = [];
+  for (const p of parsed) {
+    const isOwner = isOwnerName(p.who);
+    const c = contactFor(p.who, isOwner ? "owner" : undefined);
+    const m = {
+      id: uid("msg"),
+      conversationId: conv.id,
+      senderRawName: p.who,
+      contactId: c.id,
+      direction: isOwner || c.kind === "owner" ? "outbound" : "inbound",
+      kind: isVoice ? "voice" : (/\[media\]|^\[photo\]|\[image\]/i.test(p.body) ? "image" : "text"),
+      body: p.body, transcript: isVoice ? p.body : null,
+      sentAt: (p.when || new Date()).toISOString(),
+      ingestedAt: nowIso(), source: channel === "telegram" ? "telegram" : "export"
+    };
+    S.messages.push(m); made.push(m);
+  }
+  S.messages.sort((a, b) => a.sentAt.localeCompare(b.sentAt));
+  save();
+  return made;
+}
+
+/* ==========================================================================
+   2. EXTRACTOR  (mock rules; prompts/01_extract_promises.md is the real one)
+   ========================================================================== */
+
+/* Multi-word phrases first: the longest match wins in detectObject(), so
+   "colour sample" beats the "kitchen" it happens to be mentioned next to. */
+const OBJECTS = ["colour sample","color sample","laminate sheet","drawer channel","switch plate","false ceiling","modular kitchen","laminate","plywood","ply","tiles","tile","marble","granite","putty","paint","hardware","hinge","channel","drawer","glass","fabric","sofa","curtain","light","wiring","wire","pipe","door","window","wardrobe","kitchen","sheet","varnish","polish","grill","ceiling","wallpaper","sample","laminate sheet"];
+const COMMIT = [
+  { re: /(bhej\s*(dunga|dega|denge|diya|doonga)|bhejenge)/i, w: .25 },
+  { re: /(kar\s*(dunga|dega|denge|diya|doonga)|kar\s*jayega|kar\s*jayenge)/i, w: .25 },
+  { re: /(ho\s*(jayega|jayenge)|aa\s*(jayega|jayenge|gaya|jayegi)|pahunch\s*(jayega|gaya|jayenge|jaunga)|lag\s*jayega|fit\s*hoga)/i, w: .2 },
+  { re: /(de\s*(dunga|dega|denge|diya)|pay\s*(kar|karna|dunga)|will\s+pay)/i, w: .25 },
+  { re: /(order\s*(kar\s*(diya|dunga|diy[ae]|hai)|placed)|arrange\s*kar\s*dunga)/i, w: .2 },
+  { re: /(will\s+(send|deliver|do|come|visit|share|arrange|complete|pay|confirm))/i, w: .25 },
+  { re: /(aa\s*jao|aa\s*jaunga|mil\s*leta|dekh\s*leta|start\s*kar\s*dunga)/i, w: .2 },
+  { re: /\bpakka\b|\bconfirmed\b|\bguarantee\b/i, w: .15 }
+];
+const DONE_HINT = /(aa\s*gaya|pahunch\s*gaya|ho\s*gaya|kar\s*diya|de\s*diya|bhej\s*diya|khatam|complete(d)?\b|done\b|delivered)/i;
+const QUESTION_ONLY = /\?\s*$|^(kya|kyun|kab|kaise|where|when|what|how|bhej\s*sakte|kar\s*sakte|aa\s*sakte)/i;
+
+const WEEKDAYS = { sunday:0, ravivar:0, monday:1, somvar:1, somwar:1, tuesday:2, mangalvar:2, mangalwar:2, wednesday:3, budhvar:3, thursday:4, guruvar:4, friday:5, shukravar:5, saturday:6, shanivar:6, shaniwar:6 };
+
+function nextWeekday(from, target) {
+  const d = dayStart(from);
+  const diff = (target - d.getDay() + 7) % 7 || 7;
+  return addDays(d, diff);
+}
+
+function parseTimePhrase(msg, sentAt) {
+  const b = String(msg || "");
+  const d = new Date(sentAt);
+  let hour = 18;
+  if (/\b(subah|savere|morning)\b/i.test(b)) hour = 11;
+  else if (/\b(dopahar|afternoon)\b/i.test(b)) hour = 14;
+  else if (/\b(shaam|evening|sham)\b/i.test(b)) hour = 18;
+  else if (/\b(raat|night|tonight)\b/i.test(b)) hour = 20;
+
+  const rel = [
+    [/\b(parso|parson|day after tomorrow)\b/i, 2],
+    [/\b(aaj|today)\b/i, 0],
+    [/\b(kal|tomorrow)\b/i, 1]
+  ];
+  for (const [re, n] of rel) if (re.test(b)) return { due: at(addDays(d, n), hour + ":00"), raw: b.match(re)[0], conf: 0.85 };
+
+  if (/\b(agle\s*haft[ae]|next week)\b/i.test(b)) return { due: at(addDays(d, 7), "18:00"), raw: b.match(/\b(agle\s*haft[ae]|next week)\b/i)[0], conf: 0.7 };
+  if (/\b(is\s*haft[ae]|this week)\b/i.test(b)) return { due: at(nextWeekday(d, 5), "18:00"), raw: b.match(/\b(is\s*haft[ae]|this week)\b/i)[0], conf: 0.6 };
+  if (/\b(month\s*end|mahine\s*ke\s*end|mahine\s*k[ae]\s*end)\b/i.test(b)) {
+    const e = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    return { due: at(e, "18:00"), raw: b.match(/\b(month\s*end|mahine\s*ke\s*end|mahine\s*k[ae]\s*end)\b/i)[0], conf: 0.7 };
+  }
+  for (const [name, target] of Object.entries(WEEKDAYS)) {
+    const re = new RegExp("\\b" + name + "\\b", "i");
+    if (re.test(b)) return { due: at(nextWeekday(d, target), "18:00"), raw: b.match(re)[0], conf: 0.8 };
+  }
+  const dom = b.match(/\b(\d{1,2})\s*(?:st|nd|rd|th)?\s*(?:ko|tarikh|tareekh)\b/i);
+  if (dom) {
+    const day = Number(dom[1]);
+    if (day >= 1 && day <= 31) {
+      let y = d.getFullYear(), m = d.getMonth();
+      if (day < d.getDate()) { m += 1; if (m > 11) { m = 0; y += 1; } }
+      const cand = new Date(y, m, Math.min(day, new Date(y, m + 1, 0).getDate()));
+      return { due: at(cand, "18:00"), raw: dom[0].trim(), conf: 0.75 };
+    }
+  }
+  return null;
+}
+
+function detectObject(body) {
+  const b = String(body).toLowerCase();
+  let best = null;
+  for (const o of OBJECTS) if (b.includes(o) && (!best || o.length > best.length)) best = o;
+  return best;
+}
+
+function detectAmount(body) {
+  const m = String(body).match(/(?:₹|rs\.?\s*)(\d[\d,]{2,})/i) || String(body).match(/\b(\d{1,3},\d{3})\b/);
+  if (!m) return null;
+  const n = Number(m[1].replace(/,/g, ""));
+  return isNaN(n) ? null : n;
+}
+
+function detectCategory(body) {
+  const b = String(body).toLowerCase();
+  const has = (re) => re.test(b);
+  if (has(/(payment|paisa|paise|balance|advance|bill|invoice|salary|bhugtan|\bpay\b|de dunga|de dega|de diya)/)) return "payment";
+  if (has(/(approv|sanction|sign\s*kar|ok\s*kar\s*dijiye|confirm\s*kar\s*dijiye)/)) return "approval";
+  if (has(/(quote|quotation|estimate|\brate\b|price|rate bata)/)) return "quote";
+  if (has(/(drawing|layout|elevation|3d|design|colour sample|color sample|sample)/)) return "drawing";
+  if (has(/(fitting|install|fix\b|lagana|lag\s*jayega|polish|varnish|carpentry|wiring|plumbing|kaam\b|work\b|fit\s*hoga|start\s*kar)/)) return "installation";
+  if (has(/(laminate|ply|tile|marble|granite|putty|paint|hardware|hinge|channel|drawer|glass|fabric|curtain|sheet|grill|wallpaper|order|material)/)) return "material";
+  if (has(/(deliver|pahunch|bhej|send|dispatch|transport|arrange)/)) return "delivery";
+  if (has(/(visit|aayenge|aa\s*jao|aa\s*jaunga|milne|dekhenge|site\s*pe|site pe aau)/)) return "visit";
+  if (has(/(labour|labor|mazdoor|worker|mistri|team|staff|helper)/)) return "manpower";
+  return "other";
+}
+
+function buildStatement(cat, obj, who, body, amount, payee) {
+  const o = obj || null;
+  const theO = o ? "the " + o : "the promised item";
+  switch (cat) {
+    case "payment": return "Pay " + (amount ? money(amount) + " " : "the ") + "pending balance" + (payee ? " to " + payee : "");
+    case "approval": return "Get approval on " + theO;
+    case "quote": return "Send the quote / rate for " + theO;
+    case "drawing": return "Send " + theO + " to the client";
+    case "installation": return o ? "Complete the " + o + " installation" : "Complete the promised installation work";
+    case "material": return "Deliver " + theO + " to site";
+    case "delivery": return "Deliver " + theO + " to site";
+    case "visit": return "Visit the site as promised";
+    case "manpower": return "Arrange labour as promised";
+    default: {
+      const w = String(body).replace(/\s+/g, " ").trim().split(" ").slice(0, 8).join(" ");
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    }
+  }
+}
+
+function mockExtract(messages) {
+  const promises = [];
+  const done_events = [];
+  let lastInbound = null;   // most recent inbound message: for we_owe, who we owe
+  let lastMsg = null;       // previous message of any direction
+  for (const m of messages) {
+    const prevInbound = lastInbound;
+    const prevMsg = lastMsg;
+    if (m.direction === "inbound") lastInbound = m;
+    lastMsg = m;
+    const body = m.transcript || m.body || "";
+    if (!body || body === "[media]") continue;
+    const who = S.contacts.find(c => c.id === m.contactId);
+    const whoRole = who ? who.kind : "unknown";
+    const direction = m.direction === "outbound" ? "we_owe" : "they_owe";
+    if (whoRole === "unknown" && direction === "we_owe") continue;
+
+    const commitHit = COMMIT.find(c => c.re.test(body));
+    const timePhrase = parseTimePhrase(body, m.sentAt);
+    let obj = detectObject(body);
+    let cat = detectCategory(body);
+    // Short answers inherit their subject from the message they answer —
+    // "aaj shaam tak bhej dunga" means nothing without the request above it.
+    if (!obj) {
+      // Prefer the message immediately before this one (usually the question
+      // being answered), then fall back to the last thing the other side said.
+      // prevInbound is captured BEFORE this message, never the message itself.
+      for (const c of [prevMsg, prevInbound]) {
+        if (!c) continue;
+        const text = c.transcript || c.body || "";
+        const prevObj = detectObject(text);
+        if (!prevObj) continue;
+        obj = prevObj;
+        if (cat === "delivery" || cat === "other") cat = detectCategory(text);
+        break;
+      }
+    }
+    const amount = detectAmount(body);
+    const doneHint = DONE_HINT.test(body);
+    const questionOnly = QUESTION_ONLY.test(body.trim()) && !commitHit;
+
+    // A bare question with no agreed answer is not a promise.
+    if (questionOnly) continue;
+    // "It arrived / done" with nothing still future is PROOF, not a promise.
+    // This has to come before the commitment check, otherwise "pahunch gaya"
+    // reads as a commitment and the photo closes the promise it just created.
+    if (doneHint && !timePhrase) { done_events.push({ message: m, obj, cat }); continue; }
+    if (!commitHit) continue;
+    // "haan aaj aa jao" is the owner giving an instruction, not a promise.
+    if (direction === "we_owe" && cat === "visit") continue;
+
+    let confidence = 0.55 + (commitHit ? commitHit.w : 0) + (timePhrase ? 0.25 : 0);
+    if (doneHint && !timePhrase) confidence -= 0.1;
+    confidence = Math.max(0.2, Math.min(0.97, confidence));
+    const needsClarification = !timePhrase || confidence < 0.5;
+
+    const dupKey = whoRole + "|" + (who ? who.name : "") + "|" + cat + "|" + (obj || "");
+    const dupe = promises.find(p => p.dedupeKey === dupKey && Math.abs(daysBetween(new Date(p.sentAt), new Date(m.sentAt))) <= 14);
+    if (dupe) {
+      dupe.sourceMessageIds.push(m.id);
+      // A later message can supply the date an earlier one lacked — that is
+      // exactly how the answer to "kis date tak?" arrives. Adopt it in place
+      // instead of leaving an undated promise stuck forever.
+      if (!dupe.dueOn && timePhrase) {
+        dupe.dueOn = ymd(timePhrase.due);
+        dupe.dueRaw = timePhrase.raw;
+        dupe.dueConfidence = timePhrase.conf;
+        dupe.needsClarification = false;
+        dupe.clarifyingQuestion = null;
+      }
+      continue;
+    }
+
+    promises.push({
+      id: uid("pr"),
+      dedupeKey: dupKey,
+      statement: buildStatement(cat, obj, who ? who.name : "vendor", body, amount,
+        direction === "we_owe" && lastInbound ? lastInbound.senderRawName : null),
+      category: cat,
+      object: obj,
+      whoRaw: m.senderRawName,
+      whoContactId: m.contactId,
+      whoRole,
+      direction,
+      recipientRaw: direction === "we_owe" && lastInbound ? lastInbound.senderRawName : null,
+      recipientContactId: direction === "we_owe" && lastInbound ? lastInbound.contactId : null,
+      sourceQuote: body,
+      sourceMessageIds: [m.id],
+      sentAt: m.sentAt,
+      dueOn: timePhrase ? ymd(timePhrase.due) : null,
+      dueRaw: timePhrase ? timePhrase.raw : null,
+      dueConfidence: timePhrase ? timePhrase.conf : null,
+      confidence: round(confidence, 2),
+      needsClarification,
+      clarifyingQuestion: needsClarification
+        ? (whoRole === "vendor" ? "By when did " + (who ? who.name : "they") + " say this would be done?" : "By when did you promise this?")
+        : null,
+      status: "open",
+      createdAt: nowIso(),
+      closedAt: null,
+      attempts: 0,
+      reschedules: 0,
+      needsOwnerInput: false
+    });
+  }
+  return { promises, doneEvents: done_events };
+}
+
+/* Real model path — same contract as the prompt files. */
+async function llmExtract(messages, settings) {
+  const system = "You are Vachan's Promise Extractor. Extract commitments (who will do what, by when) from Indian small-business WhatsApp chats. " +
+    "Handle Hinglish: kal=tomorrow, parso=day after, aaj=today, shaam=18:00, subah=11:00, raat=20:00, '<weekday> tak'=coming weekday, 'is hafte'=this Friday, 'month end'=last day of month, '20th ko'=20th (next month if past). " +
+    "Ignore greetings, questions with no agreed answer, and small talk. Never invent a date: if no time was promised, due_on=null and needs_clarification=true. " +
+    "direction is they_owe (vendor/client promised us) or we_owe (owner promised). statement is one line of plain English starting with a verb. source_quote is the exact original words, untranslated. " +
+    "Return JSON only: {\"promises\":[{\"source_message_id\":\"\",\"who_raw\":\"\",\"who_role\":\"vendor|client|owner|unknown\",\"direction\":\"they_owe|we_owe\",\"category\":\"material|delivery|installation|payment|approval|visit|quote|drawing|manpower|other\",\"statement\":\"\",\"source_quote\":\"\",\"due_on\":\"YYYY-MM-DD|null\",\"due_raw\":\"\",\"due_confidence\":0.0,\"confidence\":0.0,\"status_hint\":\"open|fulfilled\",\"needs_clarification\":false,\"clarifying_question\":null}]}";
+  const lines = messages.map(m =>
+    "[" + m.id + "] " + m.sentAt + " " + m.senderRawName + " (" + m.direction + ")" + (m.transcript ? " [voice transcript]" : "") + ": " + (m.transcript || m.body)
+  ).join("\n");
+  const user = "TODAY: " + (S.demoToday || ymd(new Date())) + " (" + (S.meta.timezone || "Asia/Kolkata") + ")\nBUSINESS: " + S.meta.business +
+    "\nPROJECT: " + S.meta.project + "   SITE: " + S.meta.site +
+    "\nKNOWN PEOPLE: " + S.contacts.map(c => c.name + " (" + c.kind + ")").join(", ") +
+    "\n\nMESSAGES:\n" + lines + "\n\nExtract every commitment. Return JSON.";
+
+  let raw;
+  if (settings.mode === "ollama") {
+    const res = await fetch((settings.baseUrl || "http://localhost:11434").replace(/\/$/, "") + "/api/chat", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: settings.model || "llama3.1", stream: false, format: "json",
+        messages: [{ role: "system", content: system }, { role: "user", content: user }] })
+    });
+    if (!res.ok) throw new Error("ollama " + res.status + " — is `ollama serve` running and the model pulled?");
+    const j = await res.json();
+    raw = (j.message && j.message.content) || j.response || "";
+  } else {
+    const res = await fetch((settings.baseUrl || "").replace(/\/$/, "") + "/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer " + (settings.apiKey || "") },
+      body: JSON.stringify({ model: settings.model, temperature: 0, response_format: { type: "json_object" },
+        messages: [{ role: "system", content: system }, { role: "user", content: user }] })
+    });
+    if (!res.ok) throw new Error("model endpoint " + res.status);
+    const j = await res.json();
+    raw = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+  }
+  const json = JSON.parse(String(raw).replace(/^```(?:json)?|```$/g, "").trim());
+  const promises = [];
+  for (const p of (json.promises || [])) {
+    const src = S.messages.find(m => m.id === p.source_message_id) || messages[0];
+    const who = (src && S.contacts.find(c => c.id === src.contactId)) || contactFor(p.who_raw || "Unknown");
+    const cat = p.category || detectCategory(p.source_quote || p.statement || "");
+    promises.push({
+      id: uid("pr"), dedupeKey: (p.who_role || "unknown") + "|" + (p.who_raw || "") + "|" + cat + "|" + (detectObject(p.source_quote || "") || ""),
+      statement: p.statement || buildStatement(cat, null, p.who_raw, p.source_quote || "", null),
+      category: cat, object: detectObject(p.source_quote || ""),
+      whoRaw: p.who_raw || (src ? src.senderRawName : "Unknown"),
+      whoContactId: who ? who.id : null,
+      whoRole: p.who_role || (who ? who.kind : "unknown"),
+      direction: p.direction === "we_owe" ? "we_owe" : "they_owe",
+      sourceQuote: p.source_quote || (src ? src.body : ""),
+      sourceMessageIds: src ? [src.id] : [],
+      sentAt: src ? src.sentAt : new Date().toISOString(),
+      dueOn: p.due_on || null, dueRaw: p.due_raw || null,
+      dueConfidence: p.due_confidence == null ? null : p.due_confidence,
+      confidence: p.confidence == null ? 0.6 : p.confidence,
+      needsClarification: !!p.needs_clarification || !p.due_on,
+      clarifyingQuestion: p.clarifying_question || null,
+      status: p.status_hint === "fulfilled" ? "done" : "open",
+      createdAt: nowIso(), closedAt: null, attempts: 0, reschedules: 0, needsOwnerInput: false
+    });
+  }
+  return { promises, doneEvents: [] };
+}
+
+/* ==========================================================================
+   3. CLOSER — does an inbound message prove a promise was kept?
+   ========================================================================== */
+function mockClose(messages, doneEvents) {
+  const closed = [];
+  const candidates = doneEvents.slice();
+  for (const m of messages) {
+    if (!DONE_HINT.test(m.transcript || m.body || "")) continue;
+    if (S.promises.some(p => (p.sourceMessageIds || []).includes(m.id))) continue; // it IS a promise
+    candidates.push({ message: m, obj: detectObject(m.transcript || m.body || ""), cat: null });
+  }
+  const seen = new Set();
+  for (const ev of candidates) {
+    const m = ev.message;
+    if (seen.has(m.id)) continue;
+    seen.add(m.id);
+    const obj = ev.obj || detectObject(m.transcript || m.body || "");
+    const cand = S.promises.find(p =>
+      p.status === "open" && p.whoContactId === m.contactId &&
+      !(p.sourceMessageIds || []).includes(m.id) &&   // never close a promise with its own words
+      ((obj && p.object && p.object === obj) || (!obj && p.category === ev.cat))
+    );
+    if (!cand) continue;
+    const when = new Date(m.sentAt);
+    const late = cand.dueOn && daysBetween(new Date(cand.dueOn), when) > 0;
+    cand.status = late ? "late" : "done";
+    cand.closedAt = m.sentAt;
+    cand.closedBy = "agent:closer";
+    cand.proofId = uid("pf");
+    S.proofs.push({ id: cand.proofId, promiseId: cand.id, messageId: m.id, kind: m.kind === "image" ? "photo" : "text_claim",
+      description: (m.body || "").slice(0, 120), verifiedBy: "agent", createdAt: nowIso() });
+    closed.push(cand);
+  }
+  return closed;
+}
+
+/* ==========================================================================
+   4. STATUS RECOMPUTE + 5. CHASER (follow-up drafting)
+   ========================================================================== */
+/* Aging. A promise that never arrives has to stop being "open" or the ledger
+   lies, but it must not be marked as proof of failure either — closedAt stays
+   null because nothing was delivered, and autoMissed records why it closed so
+   the chaser keeps working and a human can still reopen it. */
+function refreshStatuses(today) {
+  const ref = today ? dayStart(today) : dayStart(new Date());
+  const changed = [];
+  for (const p of S.promises) {
+    if (p.status !== "open" || !p.dueOn) continue;
+    const od = daysBetween(new Date(p.dueOn), ref);
+    if (od > AUTO_MISS_DAYS) {
+      p.status = "missed";
+      p.autoMissed = true;
+      p.autoMissedAt = nowIso();
+      p.closedBy = "agent:aging";
+      p.updatedAt = nowIso();
+      logEvent(p.id, "auto_missed", od + "d overdue, nothing delivered", "agent:aging");
+      changed.push(p);
+    }
+  }
+  if (changed.length) save();
+  return changed;
+}
+
+function planFollowUps() {
+  const today = dayStart(new Date());
+  let created = 0;
+  for (const p of S.promises) {
+    // The chaser must keep working on a promise the aging pass gave up on —
+    // the older it is, the more it needs chasing. Only a human decision to
+    // close it (done, or missed by the owner) stops the loop.
+    const chaseable = p.status === "open" || (p.status === "missed" && p.autoMissed);
+    if (!chaseable || !p.dueOn || p.needsClarification) continue;
+    const od = daysBetween(new Date(p.dueOn), today);
+    if (od < 0) continue;
+    const attempt = od >= 5 ? 3 : od >= 3 ? 2 : 1;
+    if (S.followUps.some(f => f.promiseId === p.id && f.attempt === attempt && f.status !== "cancelled")) continue;
+    if (S.followUps.filter(f => f.promiseId === p.id).length >= 3) continue;
+    const tone = attempt === 1 ? "warm" : attempt === 2 ? "neutral" : "firm";
+    const who = p.direction === "we_owe"
+      ? (p.recipientRaw || S.meta.client)
+      : ((S.contacts.find(c => c.id === p.whoContactId) || {}).name || p.whoRaw);
+    const first = p.direction === "we_owe" ? String(who) : nickName(who);
+    const client = S.meta.client;
+    let text;
+    if (p.direction === "we_owe") {
+      text = p.statement + " — abhi tak pending hai. Main aaj shaam tak confirm kar deta hoon" +
+        (attempt > 1 ? ", sorry for the delay. Hamesha aisa nahi hota." : ".");
+    } else if (attempt === 1) {
+      text = "Hi " + first + ", " + p.statement.toLowerCase() + (p.dueRaw ? " " + p.dueRaw + " ka tha" : " pending tha") + " — aaj ho jayega?";
+    } else if (attempt === 2) {
+      text = "Hi " + first + ", " + p.statement.toLowerCase() + " " + p.dueRaw + " ka tha, " + od + " din ho gaye. " + client + " wait kar rahe hain. Aaj raat tak ho sakta hai ya nayi date bata dein?";
+    } else {
+      text = first + " ji, " + p.statement.toLowerCase() + " " + p.dueRaw + " ka tha — " + od + " din late. " + S.meta.project + " ka schedule hil raha hai. Aaj decide kar lein: kal tak ho jayega ya hum dusra vendor dekh lein?";
+    }
+    S.followUps.push({
+      id: uid("fu"), promiseId: p.id, whoName: who, attempt, tone, channel: "whatsapp",
+      status: "queued", draftText: text, createdAt: nowIso(), sentAt: null, answered: false
+    });
+    p.attempts = attempt;
+    created++;
+  }
+  save();
+  return created;
+}
+
+function sendFollowUp(id) {
+  const f = S.followUps.find(x => x.id === id);
+  if (!f) return;
+  f.status = "sent"; f.sentAt = nowIso();
+  const p = S.promises.find(x => x.id === f.promiseId);
+  const conv = S.conversations[0];
+  S.messages.push({
+    id: uid("msg"), conversationId: conv ? conv.id : null, senderRawName: S.meta.owner,
+    contactId: (S.contacts.find(c => c.name === S.meta.owner) || {}).id || null,
+    direction: "outbound", kind: "text", body: f.draftText, transcript: null,
+    sentAt: nowIso(), ingestedAt: nowIso(), source: "manual", followUpId: f.id
+  });
+  S.messages.sort((a, b) => a.sentAt.localeCompare(b.sentAt));
+  if (p) S.runs.unshift({ id: uid("run"), agent: "chaser", model: S.settings.mode, status: "ok",
+    inputRef: p.id, outputRef: f.id, note: "Follow-up attempt " + f.attempt + " (" + f.tone + ") to " + f.whoName, at: nowIso() });
+  save();
+}
+
+function simulateReplies() {
+  const sent = S.followUps.filter(f => f.status === "sent");
+  if (!sent.length) return 0;
+  let n = 0;
+  const replies = [
+    (p, f) => "Sir kal tak ho jayega, aaj thoda issue hai",
+    (p, f) => "haan bhaiya aaj raat tak pahunch jayega",
+    (p, f) => "Samajh gaya, parso tak pakka kar dunga"
+  ];
+  const targets = sent.filter((f, i) => i % 3 !== 1); // ~two thirds reply
+  for (const f of targets) {
+    const p = S.promises.find(x => x.id === f.promiseId);
+    const line = replies[n % replies.length](p, f);
+    f.answered = true;
+    const conv = S.conversations[0];
+    S.messages.push({
+      id: uid("msg"), conversationId: conv ? conv.id : null, senderRawName: f.whoName,
+      contactId: (S.contacts.find(c => c.name === f.whoName) || {}).id || null,
+      direction: "inbound", kind: "text", body: line, transcript: null,
+      sentAt: nowIso(), ingestedAt: nowIso(), source: "manual", simulated: true
+    });
+    if (p) {
+      p.reschedules++;
+      const tp = parseTimePhrase(line, new Date());
+      if (tp && !/issue/i.test(line)) { p.dueOn = ymd(tp.due); p.dueRaw = tp.raw; }
+      p.status = "open";
+    }
+    n++;
+  }
+  S.messages.sort((a, b) => a.sentAt.localeCompare(b.sentAt));
+  save();
+  return n;
+}
+
+/* ==========================================================================
+   6. SCORER — prompts/04_reliability.md, computed here, never model-invented
+   ========================================================================== */
+/* Small samples are handled by Laplace smoothing inside vendorScores(). */
+
+/* Proof only counts when it is evidence. An owner pressing “done” is an
+   attestation, not proof, and prompts/03_close_loop.md lists exactly this as
+   the main way a reliability score gets gamed. */
+function isVerifiedProof(p) {
+  return S.proofs.some(pr => pr.promiseId === p.id && (pr.kind === "photo" || pr.verifiedBy === "agent"));
+}
+
+function vendorScores() {
+  const out = [];
+  for (const c of S.contacts) {
+    const ps = S.promises.filter(p => p.whoContactId === c.id || p.whoRaw === c.name);
+    if (!ps.length) continue;
+    const done = ps.filter(p => p.status === "done");
+    const late = ps.filter(p => p.status === "late");
+    const missed = ps.filter(p => p.status === "missed");
+    const keptPs = done.concat(late);
+    const counted = keptPs.length + missed.length;
+    const onTime = done.filter(p => !p.dueOn || !p.closedAt || daysBetween(new Date(p.dueOn), new Date(p.closedAt)) <= 0);
+    const fups = S.followUps.filter(f => ps.some(p => p.id === f.promiseId) && f.status === "sent");
+    const answered = fups.filter(f => f.answered);
+    const verified = keptPs.filter(isVerifiedProof);
+    const attested = keptPs.filter(p => S.proofs.some(pr => pr.promiseId === p.id) && !isVerifiedProof(p));
+    const slips = keptPs.filter(p => p.dueOn && p.closedAt).map(p => Math.max(0, daysBetween(new Date(p.dueOn), new Date(p.closedAt))));
+    const avgSlip = slips.length ? slips.reduce((a, b) => a + b, 0) / slips.length : 0;
+    const reschedules = ps.reduce((a, p) => a + (p.reschedules || 0), 0);
+
+    let keptRate = counted ? keptPs.length / counted : 0;
+    let onTimeRate = counted ? onTime.length / counted : 0;
+    const provisional = counted < 5;
+    if (provisional && counted) {
+      // Laplace smoothing with one kept + one missed as the prior: a vendor
+      // with a single promise must not read as either 0% or 100%.
+      keptRate = (keptPs.length + 1) / (counted + 2);
+      onTimeRate = (onTime.length + 1) / (counted + 2);
+    }
+    const responseRate = fups.length ? answered.length / fups.length : 0;
+    const proofRate = keptPs.length ? verified.length / keptPs.length : 0;
+    const slipPenalty = Math.min(avgSlip, 14) / 14;
+    const reschedPenalty = Math.min(reschedules / 3, 1) * 0.10;
+    // Never score a dimension we have not measured: no deliveries means no
+    // proof rate, no follow-ups means no responsiveness. Renormalise what is
+    // left instead of scoring a vendor on a zero it never earned.
+    const comps = [["on_time", 0.45, onTimeRate], ["kept", 0.25, keptRate]];
+    if (keptPs.length) comps.push(["proof", 0.15, proofRate]);
+    if (fups.length) comps.push(["response", 0.15, responseRate]);
+    const wsum = comps.reduce((a, x) => a + x[1], 0);
+    const raw = comps.reduce((a, x) => a + x[1] * x[2], 0) / wsum;
+    const unscored = counted === 0;
+    const score = unscored ? null : Math.max(0, Math.min(100, 100 * raw * (1 - 0.20 * slipPenalty - reschedPenalty)));
+    const band = unscored ? "unscored" : provisional ? "provisional" : score >= 80 ? "strong" : score >= 60 ? "ok" : score >= 40 ? "watch" : "risk";
+    out.push({
+      contactId: c.id, name: c.name, role: c.kind, trade: c.trade,
+      total: ps.length, kept: keptPs.length, onTime: onTime.length,
+      late: late.length, missed: missed.length, missedAuto: missed.filter(p => p.autoMissed).length,
+      open: ps.filter(p => p.status === "open").length,
+      attested: attested.length,
+      onTimeRate, keptRate, responseRate, proofRate, avgSlip, reschedules, provisional,
+      reliability: score === null ? null : round(score, 1), band,
+      measured: unscored ? [] : comps.map(x => x[0]),
+      breakdown: {
+        on_time: round(45 * onTimeRate, 1), kept: round(25 * keptRate, 1),
+        response: fups.length ? round(15 * responseRate, 1) : null,
+        proof: keptPs.length ? round(15 * proofRate, 1) : null,
+        slip_penalty: round(0.20 * slipPenalty, 3), reschedule_penalty: round(reschedPenalty, 3)
+      },
+      history: S.scoreHistory.filter(h => h.contactId === c.id).slice(-8)
+    });
+  }
+  // Unscored vendors sort last, not as though they had scored zero.
+  return out.sort((a, b) =>
+    (a.reliability === null ? 1 : 0) - (b.reliability === null ? 1 : 0) ||
+    (b.reliability || 0) - (a.reliability || 0) || a.name.localeCompare(b.name));
+}
+
+/* One snapshot per vendor per day, replaced only when the number actually
+   moves. This is the audit trail the schema calls vendor_score_snapshots. */
+function snapshotScores(scores) {
+  const today = ymd(new Date());
+  let added = 0;
+  for (const v of (scores || vendorScores())) {
+    if (v.reliability === null) continue;
+    const idx = S.scoreHistory.findIndex(h => h.contactId === v.contactId && h.asOf === today);
+    if (idx >= 0 && S.scoreHistory[idx].reliability === v.reliability) continue;
+    const entry = { contactId: v.contactId, name: v.name, asOf: today, reliability: v.reliability,
+      band: v.band, total: v.total, measured: v.measured.slice(), provisional: v.provisional };
+    if (idx >= 0) S.scoreHistory[idx] = entry; else S.scoreHistory.push(entry);
+    added++;
+  }
+  if (S.scoreHistory.length > 400) S.scoreHistory = S.scoreHistory.slice(-400);
+  return added;
+}
+
+function explanation(v) {
+  if (v.reliability === null) return "Nothing delivered or missed yet — " + plural(v.open, "promise") + " still open, so there is nothing to score.";
+  const bits = [];
+  if (v.provisional) bits.push("Only " + plural(v.total, "promise") + " on record — treat this as provisional.");
+  if (v.missed) bits.push(v.missed + " promised thing" + (v.missed > 1 ? "s" : "") + " never arrived" + (v.missedAuto ? " (flagged automatically after " + AUTO_MISS_DAYS + " days)" : "") + ".");
+  if (v.late) bits.push(v.late + " delivered late" + (v.avgSlip >= 1 ? " (avg " + round(v.avgSlip) + "d)" : "") + ".");
+  if (!v.missed && !v.late && v.kept) bits.push("Everything promised so far was delivered on time.");
+  if (v.measured.indexOf("response") >= 0 && v.responseRate < 0.5) bits.push("Replies to follow-ups are patchy — expected for site work, still a datapoint.");
+  if (v.measured.indexOf("proof") >= 0 && v.proofRate < 0.5) bits.push("Deliveries usually arrive without a photo; only verified proof counts here.");
+  if (v.attested) bits.push(v.attested + " closure" + (v.attested > 1 ? "s" : "") + " rest on your word rather than a photo, so " + (v.attested > 1 ? "they are" : "it is") + " not counted as proof.");
+  if (v.reschedules) bits.push(v.reschedules + " reschedule" + (v.reschedules > 1 ? "s" : "") + " logged.");
+  return bits.join(" ") || "Not enough history yet.";
+}
+
+/* ==========================================================================
+   PIPELINE
+   ========================================================================== */
+async function runPipeline(messages, doneEvents) {
+  const settings = S.settings || blankState().settings;
+  let result;
+  if (settings.mode === "mock") {
+    result = mockExtract(messages);
+    S.runs.unshift({ id: uid("run"), agent: "extractor", model: "mock", status: "ok", inputRef: messages.length + " messages",
+      note: result.promises.length + " promise(s) extracted", at: nowIso() });
+  } else {
+    try {
+      result = await llmExtract(messages, settings);
+      S.runs.unshift({ id: uid("run"), agent: "extractor", model: settings.mode + ":" + (settings.model || "?"), status: "ok",
+        inputRef: messages.length + " messages", note: result.promises.length + " promise(s) extracted", at: nowIso() });
+    } catch (e) {
+      S.runs.unshift({ id: uid("run"), agent: "extractor", model: settings.mode + ":" + (settings.model || "?"), status: "error",
+        inputRef: messages.length + " messages", note: String(e.message || e), at: nowIso() });
+      throw e;
+    }
+  }
+  // de-duplicate against existing promises on the same identity
+  const fresh = [];
+  for (const p of result.promises) {
+    const exists = S.promises.find(x => x.dedupeKey === p.dedupeKey &&
+      (x.status === "open" || (x.status === "missed" && x.autoMissed)));
+    if (exists) {
+      exists.sourceMessageIds = exists.sourceMessageIds.concat(p.sourceMessageIds || []);
+      // Same commitment said twice: adopt the date if the first time nobody
+      // gave one, which is precisely how the answer to a chasing question lands.
+      if (!exists.dueOn && p.dueOn) {
+        exists.dueOn = p.dueOn;
+        exists.dueRaw = p.dueRaw;
+        exists.dueConfidence = p.dueConfidence;
+        exists.needsClarification = false;
+        exists.clarifyingQuestion = null;
+        if (exists.status === "missed") { exists.status = "open"; exists.autoMissed = false; exists.closedBy = null; }
+        logEvent(exists.id, "date_set", "answered with " + p.dueRaw + " (" + p.dueOn + ")");
+      }
+      continue;
+    }
+    fresh.push(p);
+  }
+  S.promises.push(...fresh);
+  for (const p of fresh) logEvent(p.id, "extracted", p.statement, "agent:extractor");
+
+  const closed = mockClose(messages, result.doneEvents || []);
+  if (closed.length) S.runs.unshift({ id: uid("run"), agent: "closer", model: settings.mode, status: "ok", inputRef: messages.length + " messages",
+    note: closed.length + " promise(s) closed with proof", at: nowIso() });
+
+  const aged = refreshStatuses();
+  const planned = planFollowUps();
+  if (planned) S.runs.unshift({ id: uid("run"), agent: "chaser", model: settings.mode, status: "ok", inputRef: "overdue promises",
+    note: planned + " follow-up draft(s) queued", at: nowIso() });
+  const scores = vendorScores();
+  const snaps = snapshotScores(scores);
+  S.runs.unshift({ id: uid("run"), agent: "scorer", model: "formula v2", status: "ok", inputRef: "all vendors",
+    note: scores.length + " score(s), " + snaps + " snapshot(s)", at: nowIso() });
+  S.runs = S.runs.slice(0, 60);
+  save();
+  return { fresh: fresh.length, closed: closed.length, planned, aged: aged.length, scores };
+}
+
+/* ==========================================================================
+   SEED — a realistic Hinglish week on site, dated relative to today
+   ========================================================================== */
+function seed() {
+  S = blankState();
+  const today = new Date();
+  const D = (n) => addDays(today, n);
+  contactFor(OWNER, "owner");
+  const imran = contactFor("Imran bhai", "vendor"); imran.trade = "carpenter";
+  const ramesh = contactFor("Painter Ramesh", "vendor"); ramesh.trade = "painter";
+  const ravi = contactFor("Ravi Electrician", "vendor"); ravi.trade = "electrician";
+  contactFor("Mrs Iyer", "client");
+
+  const conv = { id: uid("cv"), channel: "whatsapp", kind: "group", title: "Villa 42 — site group", source: "export" };
+  S.conversations.push(conv);
+
+  const raw = [
+    [-3, "09:10", "Imran bhai", "bhaiya aaj aayenge?"],
+    [-3, "09:40", OWNER, "haan aaj aa jao"],
+    [-3, "18:31", "Imran bhai", "Sir laminate ka order kar diya, kal shaam tak site pe pahunch jayega"],
+    [-3, "18:33", OWNER, "theek hai, aur wardrobe fitting?"],
+    [-3, "18:40", "Imran bhai", "fitting Monday tak pakka"],
+    [-3, "19:02", OWNER, "40,000 balance main 20th ko de dunga, tension mat lo"],
+    [-2, "11:05", "Painter Ramesh", "sir putty ka material khatam ho gaya, kal subah tak arrange kar dunga"],
+    [-2, "12:20", "Mrs Iyer", "kitchen ka colour sample bhej dijiye aaj"],
+    [-2, "13:00", OWNER, "aaj shaam tak bhej dunga"],
+    [-1, "09:15", "Imran bhai", "haan sir wo drawer channel ka jo problem tha na, wo maine Bombay se order kar diya hai, Tuesday tak aa jayega pakka", "voice"],
+    [-1, "16:40", "Imran bhai", "8 sheet laminate site pe pahunch gaya [photo]", "image"],
+    [-1, "17:10", "Ravi Electrician", "wiring ka kaam parso tak kar dunga"],
+    [0, "10:05", "Mrs Iyer", "kitchen kab tak ready hoga?"],
+    [0, "10:30", "Painter Ramesh", "polish start kar dunga"]
+  ];
+  for (const [off, time, who, body, kind] of raw) {
+    const isOwner = isOwnerName(who);
+    const c = contactFor(who, isOwner ? "owner" : undefined);
+    S.messages.push({
+      id: uid("msg"), conversationId: conv.id, senderRawName: who, contactId: c.id,
+      direction: isOwner ? "outbound" : "inbound",
+      kind: kind || (/\[photo\]|\[media\]/.test(body) ? "image" : "text"),
+      body: body, transcript: kind === "voice" ? body : null,
+      sentAt: at(D(off), time).toISOString(), ingestedAt: nowIso(),
+      source: kind === "voice" ? "forward" : "export"
+    });
+  }
+  S.messages.sort((a, b) => a.sentAt.localeCompare(b.sentAt));
+
+  /* Closed history, so reliability scores mean something on day one.
+     [vendor, what, category, due offset, closed offset (null = never came), proof] */
+  const history = [
+    ["Imran bhai", "Deliver ply for the wardrobes", "material", -46, -46, true],
+    ["Imran bhai", "Complete the TV unit frame", "installation", -38, -38, true],
+    ["Imran bhai", "Deliver drawer channels", "material", -30, -29, true],
+    ["Imran bhai", "Fix the wardrobe hinges", "installation", -24, -24, true],
+    ["Imran bhai", "Deliver laminate for the kitchen", "material", -17, -17, true],
+    ["Imran bhai", "Polish the wardrobe shutters", "installation", -9, -8, true],
+    ["Painter Ramesh", "Prime the living room walls", "other", -40, -40, true],
+    ["Painter Ramesh", "Deliver the putty", "material", -33, -31, false],
+    ["Painter Ramesh", "Second coat of primer", "other", -26, null, false],
+    ["Painter Ramesh", "Paint the balcony ceiling", "other", -19, -19, true],
+    ["Ravi Electrician", "Conceal the kitchen wiring", "installation", -35, -35, true],
+    ["Ravi Electrician", "Install the switch plates", "installation", -27, -27, true],
+    ["Ravi Electrician", "Dress the DB panel", "installation", -21, -18, false]
+  ];
+  for (const [name, statement, category, dueOff, closedOff, proof] of history) {
+    const c = S.contacts.find(x => x.name === name);
+    if (!c) continue;
+    const due = ymd(D(dueOff));
+    let status = "missed", closedAt = null;
+    if (closedOff !== null) {
+      status = daysBetween(due, ymd(D(closedOff))) > 0 ? "late" : "done";
+      closedAt = at(D(closedOff), "17:00").toISOString();
+    }
+    const p = {
+      id: uid("pr"), dedupeKey: "hist|" + name + "|" + category + "|" + statement,
+      statement, category, object: detectObject(statement), whoRaw: name, whoContactId: c.id,
+      whoRole: "vendor", direction: "they_owe", sourceQuote: statement, sourceMessageIds: [],
+      sentAt: at(D(dueOff), "10:00").toISOString(), dueOn: due, dueRaw: "that week",
+      dueConfidence: 0.7, confidence: 0.8, needsClarification: false, clarifyingQuestion: null,
+      status, createdAt: at(D(dueOff), "10:00").toISOString(), closedAt, closedBy: "agent:closer",
+      attempts: 1, reschedules: 0, needsOwnerInput: false, historical: true
+    };
+    S.promises.push(p);
+    if (proof) S.proofs.push({ id: uid("pf"), promiseId: p.id, kind: "photo",
+      description: "Delivery photo", verifiedBy: "agent", createdAt: closedAt || nowIso() });
+  }
+  S.seededAt = nowIso();
+  save();
+}
+
+/* ==========================================================================
+   RENDERING
+   ========================================================================== */
+function urgency(p) {
+  if (p.status === "done" || p.status === "late" || p.status === "missed") return p.status;
+  if (!p.dueOn) return "nodate";
+  const od = daysBetween(new Date(p.dueOn), new Date());
+  return od > 0 ? "overdue" : od === 0 ? "today" : "upcoming";
+}
+function urgencyLabel(p) {
+  const u = urgency(p);
+  if (u === "overdue") return Math.abs(daysBetween(new Date(p.dueOn), new Date())) + "d overdue";
+  if (u === "today") return "due today";
+  if (u === "upcoming") return "in " + daysBetween(new Date(), new Date(p.dueOn)) + "d";
+  if (u === "nodate") return "no date";
+  return u;
+}
+
+/* Ledger view state. Deliberately not persisted: a filter you set to debug
+   something should not still be hiding rows tomorrow morning. */
+const view = { q: "", status: "all", dir: "all" };
+const pct = (v) => Math.round((v || 0) * 100) + "%";
+
+function actionBtn(action, label, id, cls) {
+  return '<button class="btn tiny' + (cls ? " " + cls : "") + '" data-action="' + action +
+    '" data-id="' + id + '">' + label + "</button>";
+}
+
+function rowActions(p) {
+  const shut = p.status === "done" || p.status === "late" || (p.status === "missed" && !p.autoMissed);
+  if (shut) {
+    return actionBtn("reopen", "Reopen", p.id) +
+      (p.status === "missed" ? " " + actionBtn("close", "It came late", p.id) : "");
+  }
+  const out = [];
+  if (p.autoMissed) out.push(actionBtn("reopen", "Reopen", p.id));
+  // A promise the aging pass gave up on can still turn up late; closing it
+  // directly records it as late rather than forcing a reopen first.
+  out.push(actionBtn("close", p.autoMissed ? "It came late" : "Proof received", p.id, "primary"));
+  out.push(actionBtn("missed", "Never came", p.id));
+  out.push(actionBtn("setdate", p.dueOn ? "Change date" : "Set date", p.id));
+  return out.join(" ");
+}
+
+function visiblePromises() {
+  const q = view.q.trim().toLowerCase();
+  return S.promises.filter(p => {
+    if (view.dir !== "all" && p.direction !== view.dir) return false;
+    if (view.status === "open" && p.status !== "open") return false;
+    if (view.status === "overdue" && !(p.status === "open" && urgency(p) === "overdue")) return false;
+    if (view.status === "nodate" && !(p.status === "open" && !p.dueOn)) return false;
+    if (view.status === "done" && !(p.status === "done" || p.status === "late")) return false;
+    if (view.status === "missed" && p.status !== "missed") return false;
+    if (!q) return true;
+    return [p.statement, p.whoRaw, p.sourceQuote, p.category, p.dueRaw]
+      .join(" ").toLowerCase().indexOf(q) >= 0;
+  }).sort((a, b) => (a.dueOn || "9999-99-99").localeCompare(b.dueOn || "9999-99-99"));
+}
+
+function render() {
+  $("#bizBadge").textContent = S.meta.business + " · " + S.meta.project;
+  $("#modeBadge").textContent = "extractor: " + (S.settings.mode || "mock");
+  $("#modeBadge").className = "badge " + (S.settings.mode === "mock" ? "mock" : "ok");
+
+  const open = S.promises.filter(p => p.status === "open");
+  const overdue = open.filter(p => urgency(p) === "overdue");
+  const queued = S.followUps.filter(f => f.status === "queued");
+  const scored = vendorScores();
+  const anyClosed = S.promises.filter(p => p.status === "done" || p.status === "late");
+  const onTimePct = anyClosed.length ? Math.round(100 * anyClosed.filter(p => !p.dueOn || !p.closedAt || daysBetween(new Date(p.dueOn), new Date(p.closedAt)) <= 0).length / anyClosed.length) : null;
+
+  $("#s-open").textContent = open.length;
+  $("#s-overdue").textContent = overdue.length;
+  $("#s-queued").textContent = queued.length;
+  $("#s-ontime").textContent = onTimePct == null ? "—" : onTimePct + "%";
+
+  /* Today */
+  const actions = [];
+  for (const f of queued.slice(0, 6)) {
+    actions.push('<div class="card"><div class="row"><span class="pill ' + f.tone + '">' + f.tone + "</span><span class='note'>attempt " + f.attempt +
+      '</span><span class="spacer"></span><span class="note">' + esc(f.whoName) + "</span></div>" +
+      '<div style="margin:8px 0">' + esc(f.draftText) + "</div>" +
+      '<div class="row"><button class="btn tiny primary" data-action="send" data-id="' + f.id + '">Send</button>' +
+      '<button class="btn tiny" data-action="skip" data-id="' + f.id + '">Skip</button></div></div>');
+  }
+  for (const p of S.promises.filter(p => p.needsClarification && p.status === "open").slice(0, 4)) {
+    actions.push('<div class="card"><div class="row"><span class="pill nodate">needs a date</span><span class="note">' + esc(p.whoRaw) + '</span></div>' +
+      '<div style="margin:8px 0">' + esc(p.statement) + '</div><div class="quote">"' + esc(p.sourceQuote) + '"</div>' +
+      '<div class="row" style="margin-top:8px"><button class="btn tiny" data-action="clarify" data-id="' + p.id + '">Ask: ' + esc(p.clarifyingQuestion || "when?") + "</button></div></div>");
+  }
+  $("#today-actions").innerHTML = actions.length ? actions.join("")
+    : '<div class="card note">Nothing needs the owner right now. Load the sample business, or paste a chat in the Inbox tab.</div>';
+
+  const overdueRows = overdue.concat(open.filter(p => urgency(p) === "today")).sort((a, b) => (a.dueOn || "").localeCompare(b.dueOn || ""));
+  $("#today-list").innerHTML = overdueRows.length ? '<div class="card" style="padding:0;overflow:auto"><table><thead><tr><th>Who</th><th>What</th><th>Promised</th><th>Late by</th></tr></thead><tbody>' +
+    overdueRows.map(p => "<tr><td class='who'>" + esc(p.whoRaw) + (p.direction === "we_owe" ? ' <span class="pill we">we_owe</span>' : "") +
+      "</td><td>" + esc(p.statement) + '<div class="quote">"' + esc(String(p.sourceQuote).slice(0, 90)) + '"</div></td>' +
+      "<td>" + esc(p.dueRaw || "—") + '<div class="note mono">' + esc(p.dueOn || "") + "</div></td>" +
+      '<td><span class="pill overdue">' + urgencyLabel(p) + "</span></td></tr>").join("") +
+    "</tbody></table></div>" : '<div class="card note">No overdue promises.</div>';
+
+  /* Inbox */
+  $("#msgCount").textContent = "(" + S.messages.length + ")";
+  $("#msgLog").innerHTML = S.messages.map(m => {
+    const c = S.contacts.find(x => x.id === m.contactId);
+    const cls = (m.direction === "outbound" ? "msg out" : "msg") + (m.kind === "voice" ? " voice" : "");
+    return '<div class="' + cls + '"><div class="meta"><b>' + esc(m.senderRawName) + "</b>" +
+      (c ? ' <span class="pill">' + esc(c.kind) + "</span>" : "") +
+      (m.kind === "voice" ? ' <span class="pill" style="color:var(--info)">voice note</span>' : "") +
+      (m.kind === "image" ? ' <span class="pill">photo</span>' : "") +
+      (m.simulated ? ' <span class="pill" style="color:var(--warn)">simulated reply</span>' : "") +
+      " <span>" + new Date(m.sentAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) + "</span></div>" +
+      "<div>" + esc(String(m.body).replace("[photo]", "").replace("[media]", "")) + "</div></div>";
+  }).join("") || '<div class="card note">No messages yet.</div>';
+
+  /* Promises */
+  const rows = visiblePromises();
+  $("#pCount").textContent = rows.length + " of " + plural(S.promises.length, "promise");
+  $("#promiseRows").innerHTML = rows.length ? rows.map(p => {
+    const u = urgency(p);
+    const who = (S.contacts.find(c => c.id === p.whoContactId) || {}).name || p.whoRaw;
+    const statusPill = p.autoMissed
+      ? '<span class="pill missed">missed (auto)</span>'
+      : '<span class="pill ' + u + '">' + esc(p.status) + "</span>";
+    const dueCell = p.dueOn
+      ? "<span class='mono'>" + esc(p.dueOn) + "</span><div class='note'>" + esc(p.dueRaw || "") + "</div>"
+      : '<span class="pill nodate">no date</span>' + (p.clarifyingQuestion ? "<div class='note'>" + esc(p.clarifyingQuestion) + "</div>" : "");
+    const lastEvent = (S.events.find(e => e.promiseId === p.id) || {}).kind;
+    return "<tr><td><span class='who'>" + esc(who) + "</span><div class='note'>" + esc(p.whoRole || "") +
+        (p.direction === "we_owe" ? ' <span class="pill we">we_owe</span>' : "") + "</div></td>" +
+      "<td>" + esc(p.statement) + '<div class="quote">"' + esc(String(p.sourceQuote).slice(0, 110)) + '"</div>' +
+      '<div class="note">' + esc(p.category) + (lastEvent ? " · " + esc(lastEvent.replace(/_/g, " ")) : "") + "</div></td>" +
+      "<td>" + dueCell + '<div style="margin-top:4px"><span class="pill ' + (u === "nodate" ? "nodate" : u) + '">' + urgencyLabel(p) + "</span></div></td>" +
+      "<td>" + statusPill + "</td>" +
+      "<td>" + (p.confidence ? round(p.confidence * 100) + "%" : "—") + "</td>" +
+      "<td style='white-space:nowrap'>" + rowActions(p) + "</td></tr>";
+  }).join("") : "<tr><td colspan='6' class='note'>" +
+      (S.promises.length ? "Nothing matches that filter." : "No promises yet — ingest a chat first.") + "</td></tr>";
+
+  /* Follow-ups */
+  const fs = S.followUps.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  $("#followupList").innerHTML = fs.length ? fs.map(f => {
+    const p = S.promises.find(x => x.id === f.promiseId) || {};
+    return '<div class="card" style="margin-bottom:10px"><div class="row"><span class="pill ' + f.tone + '">' + f.tone + "</span>" +
+      '<span class="note">attempt ' + f.attempt + " · " + esc(f.whoName) + " · " + esc(p.statement || "") + "</span><span class='spacer'></span>" +
+      '<span class="pill ' + (f.status === "sent" ? "done" : "") + '">' + esc(f.status) + (f.answered ? " · replied" : "") + "</span></div>" +
+      '<div style="margin:9px 0;white-space:pre-wrap">' + esc(f.draftText) + "</div>" +
+      (f.status === "queued"
+        ? '<div class="row"><button class="btn tiny primary" data-action="send" data-id="' + f.id + '">Send</button><button class="btn tiny" data-action="skip" data-id="' + f.id + '">Skip</button></div>'
+        : '<div class="note">sent ' + new Date(f.sentAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) + "</div>") +
+      "</div>";
+  }).join("") : '<div class="card note">No follow-ups yet. Ingest a chat, then press “Plan follow-ups for overdue promises”.</div>';
+
+  /* Vendors */
+  const scoreCard = (x) => {
+    const theirs = S.promises.filter(p => p.whoContactId === x.contactId || p.whoRaw === x.name);
+    const recent = theirs.slice().sort((a, b) => (b.sentAt || "").localeCompare(a.sentAt || "")).slice(0, 8);
+    return '<div class="card" style="margin-bottom:10px"><div class="row">' +
+      "<div><div class='who'>" + esc(x.name) + "</div><div class='note'>" + esc(x.trade || x.role) + " · " + plural(x.total, "promise") + "</div></div>" +
+      '<span class="spacer"></span><div style="text-align:right"><div class="score">' + (x.reliability === null ? "—" : x.reliability) +
+      '</div><span class="band ' + x.band + '">' + x.band + "</span></div></div>" +
+      '<div class="bar" style="margin:10px 0"><i style="width:' + (x.reliability || 0) + '%"></i></div>' +
+      '<div class="row note" style="gap:14px">' +
+        "<span>on-time " + pct(x.onTimeRate) + "</span>" +
+        "<span>kept " + pct(x.keptRate) + "</span>" +
+        (x.measured.indexOf("response") >= 0 ? "<span>replies " + pct(x.responseRate) + "</span>" : "<span>replies — not measured</span>") +
+        (x.measured.indexOf("proof") >= 0 ? "<span>proof " + pct(x.proofRate) + "</span>" : "<span>proof — nothing delivered yet</span>") +
+        (x.avgSlip >= 0.5 ? "<span>avg slip " + round(x.avgSlip) + "d</span>" : "") +
+        (x.reschedules ? "<span>" + x.reschedules + " reschedules</span>" : "") +
+      "</div>" +
+      '<div class="note mono" style="margin-top:6px">scored on: ' + (x.measured.length ? x.measured.join(" + ") : "nothing scored yet") +
+        (x.provisional ? " · provisional (<5 closed)" : "") + "</div>" +
+      (x.history.length > 1 ? '<div class="row" style="gap:3px;align-items:flex-end;height:30px;margin-top:8px">' +
+        x.history.map(h => '<i title="' + esc(h.asOf) + " — " + h.reliability + '" style="display:block;width:9px;border-radius:2px;background:var(--accent);height:' +
+          Math.max(4, Math.round(h.reliability * 0.28)) + 'px"></i>').join("") +
+        '<span class="note" style="margin-left:8px">score history</span></div>' : "") +
+      '<div style="margin-top:8px">' + esc(explanation(x)) + "</div>" +
+      (recent.length ? '<details style="margin-top:8px"><summary class="note" style="cursor:pointer">' +
+        plural(recent.length, "promise") + ' on record</summary><div style="margin-top:6px">' +
+        recent.map(p => '<div class="note" style="padding:2px 0"><span class="pill ' + urgency(p) + '">' + esc(p.status) + "</span> " +
+          esc(p.statement) + " · " + esc(p.dueOn || "no date") + "</div>").join("") +
+        "</div></details>" : "") +
+      "</div>";
+  };
+  const vendorsOnly = scored.filter(x => x.role !== "owner");
+  const ownPromises = scored.filter(x => x.role === "owner");
+  $("#vendorCards").innerHTML =
+    (vendorsOnly.length ? vendorsOnly.map(scoreCard).join("") : '<div class="card note">No vendor data yet.</div>') +
+    (ownPromises.length ? '<h2>Your own promises <span class="note">(direction we_owe — the ones that quietly cost clients)</span></h2>' + ownPromises.map(scoreCard).join("") : "");
+
+  /* Agents */
+  const AGENTS = [
+    ["Extractor", "prompts/01_extract_promises.md", "Reads chats and voice-note transcripts, returns who/what/by-when as strict JSON.", "extractor"],
+    ["Chaser", "prompts/02_follow_up.md", "Drafts short Hinglish follow-ups in the owner's voice, escalates tone per attempt.", "chaser"],
+    ["Closer", "prompts/03_close_loop.md", "Decides whether a message or photo actually proves a promise was kept.", "closer"],
+    ["Scorer", "prompts/04_reliability.md", "Versioned formula + explanation line for each vendor's reliability score.", "scorer"]
+  ];
+  $("#agentList").innerHTML = '<div class="grid cols-4">' + AGENTS.map(([name, file, desc, key]) => {
+    const runs = S.runs.filter(r => r.agent === key).length;
+    return '<div class="card"><div class="who">' + esc(name) + '</div><div class="mono" style="color:var(--dim);font-size:11px">' + esc(file) + "</div><p class='note' style='min-height:56px'>" + esc(desc) +
+      '</p><span class="pill">' + runs + " run" + (runs === 1 ? "" : "s") + "</span></div>";
+  }).join("") + "</div>";
+  $("#runRows").innerHTML = S.runs.length ? S.runs.map(r => "<tr><td>" + esc(r.agent) + "</td><td class='mono'>" + esc(r.model) + "</td><td><span class='pill " + (r.status === "ok" ? "done" : "overdue") + "'>" + esc(r.status) + "</span></td><td>" + esc(r.note) + "</td><td class='note'>" + new Date(r.at).toLocaleTimeString("en-IN") + "</td></tr>").join("")
+    : "<tr><td colspan='5' class='note'>No agent runs yet.</td></tr>";
+
+  /* DB */
+  const verifiedProofs = S.proofs.filter(pr => pr.kind === "photo" || pr.verifiedBy === "agent").length;
+  $("#dbStats").innerHTML = ["businesses: 1", "contacts: " + S.contacts.length, "conversations: " + S.conversations.length,
+    "messages: " + S.messages.length, "promises: " + S.promises.length,
+    "promise_events: " + S.events.length,
+    "follow_ups: " + S.followUps.length,
+    "proofs: " + S.proofs.length + (S.proofs.length ? " (" + verifiedProofs + " verified)" : ""),
+    "vendor_score_snapshots: " + S.scoreHistory.length, "agent_runs: " + S.runs.length,
+    "state: v" + (S.version || "?") + " · storage: " + (lastSaveOk ? "ok" : "FAILING — export now")
+  ].join("<br>");
+
+  $("#eventRows").innerHTML = S.events.length ? S.events.slice(0, 40).map(e => {
+    const p = S.promises.find(x => x.id === e.promiseId);
+    return "<tr><td class='note'>" + new Date(e.at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) + "</td>" +
+      "<td>" + esc(p ? String(p.statement).slice(0, 60) : "—") + "</td>" +
+      "<td><span class='pill'>" + esc(String(e.kind).replace(/_/g, " ")) + "</span></td>" +
+      "<td class='note'>" + esc(e.detail || "") + "</td>" +
+      "<td class='note mono'>" + esc(e.actor || "") + "</td></tr>";
+  }).join("") : "<tr><td colspan='5' class='note'>No events yet.</td></tr>";
+
+  /* The cloud panel is optional: no Supabase configured, no panel. */
+  renderCloud();
+}
+
+/* ==========================================================================
+   ROW MAPPING — one place that knows the columns.
+
+   Shared by the SQL export and by Supabase sync. Two copies would drift, and a
+   drifted column name fails *silently* on PostgREST: it ignores keys it does
+   not recognise, so a typo writes a default instead of raising. Orders follow
+   the foreign keys so a push can insert in sequence without tripping one.
+   ========================================================================== */
+const LOCAL_BIZ = "biz_local";
+const LOCAL_PROJECT = "prj_local";
+const ROW_ORDER = ["businesses", "projects", "contacts", "vendors", "conversations",
+  "messages", "promises", "promise_events", "follow_ups", "proofs", "vendor_score_snapshots"];
+
+const vendorIdFor = (contactId) => "vd_" + String(contactId || "unknown").replace(/[^A-Za-z0-9_]/g, "");
+
+function tableRows() {
+  const at = nowIso();
+  const client = S.contacts.find(c => c.kind === "client");
+  const vendorContacts = {};
+  for (const c of S.contacts) if (c.kind === "vendor") vendorContacts[c.id] = true;
+  const born = S.seededAt || at;
+  const out = {};
+
+  out.businesses = {
+    cols: ["id", "name", "owner_name", "trade", "timezone", "locale", "follow_up_hour", "created_at"],
+    rows: [[LOCAL_BIZ, S.meta.business, S.meta.owner, "interior", S.meta.timezone, "en-IN", 10, born]]
+  };
+  out.projects = {
+    cols: ["id", "business_id", "name", "client_contact_id", "site_address", "status", "created_at"],
+    rows: [[LOCAL_PROJECT, LOCAL_BIZ, S.meta.project, client ? client.id : null, S.meta.site, "active", born]]
+  };
+  out.contacts = {
+    cols: ["id", "business_id", "name", "phone", "kind", "company", "notes", "created_at"],
+    rows: S.contacts.map(c => [c.id, LOCAL_BIZ, c.name || null, c.phone || null, c.kind,
+      null, null, c.createdAt || born])
+  };
+  out.vendors = {
+    cols: ["id", "business_id", "contact_id", "trade", "active", "created_at"],
+    rows: S.contacts.filter(x => x.kind === "vendor").map(c =>
+      [vendorIdFor(c.id), LOCAL_BIZ, c.id, c.trade || "other", 1, c.createdAt || born])
+  };
+  out.conversations = {
+    cols: ["id", "business_id", "project_id", "channel", "kind", "external_id", "title", "source", "created_at"],
+    rows: S.conversations.map(c => [c.id, LOCAL_BIZ, LOCAL_PROJECT, c.channel || "whatsapp",
+      c.kind || "group", c.externalId || null, c.title || null, c.source || "export", c.createdAt || born])
+  };
+  out.messages = {
+    cols: ["id", "conversation_id", "sender_contact_id", "sender_raw_name", "direction", "kind", "body", "transcript", "sent_at", "ingested_at", "source"],
+    rows: S.messages.map(m => [m.id, m.conversationId, m.contactId || null, m.senderRawName || null,
+      m.direction, m.kind, m.body == null ? null : m.body, m.transcript == null ? null : m.transcript,
+      m.sentAt || at, m.ingestedAt || at, m.source || "export"])
+  };
+  out.promises = {
+    cols: ["id", "business_id", "project_id", "conversation_id", "source_message_id", "who_contact_id", "who_raw", "who_role", "direction", "category", "statement", "object", "dedupe_key", "source_quote", "promised_at", "attempts", "reschedules", "auto_missed", "due_on", "due_raw", "due_confidence", "confidence", "status", "needs_clarification", "clarifying_question", "closed_at", "closed_by", "created_at", "updated_at"],
+    rows: S.promises.map(p => [p.id, LOCAL_BIZ, LOCAL_PROJECT, null,
+      (p.sourceMessageIds || [])[0] || null, p.whoContactId || null, p.whoRaw || null,
+      p.whoRole || null, p.direction, p.category || null, p.statement,
+      p.object || null, p.dedupeKey || null, p.sourceQuote || null, p.sentAt || p.createdAt || at,
+      Number(p.attempts || 0), Number(p.reschedules || 0), p.autoMissed ? 1 : 0,
+      p.dueOn || null, p.dueRaw || null,
+      p.dueConfidence == null ? null : Number(p.dueConfidence),
+      p.confidence == null ? 0.5 : Number(p.confidence),
+      p.status, p.needsClarification ? 1 : 0, p.clarifyingQuestion || null,
+      p.closedAt || null, p.closedBy || null,
+      p.createdAt || at, p.updatedAt || p.closedAt || p.createdAt || at])
+  };
+  out.promise_events = {
+    cols: ["id", "promise_id", "kind", "detail", "actor", "at"],
+    rows: S.events.map(e => [e.id, e.promiseId || null, e.kind, e.detail || null, e.actor || null, e.at])
+  };
+  out.follow_ups = {
+    cols: ["id", "business_id", "promise_id", "attempt", "scheduled_for", "channel", "tone", "status", "draft_text", "sent_at", "created_at"],
+    rows: S.followUps.map(f => [f.id, LOCAL_BIZ, f.promiseId, Number(f.attempt || 1),
+      ymd(new Date(f.createdAt || at)), f.channel || "whatsapp", f.tone || "warm", f.status,
+      f.draftText == null ? null : f.draftText, f.sentAt || null, f.createdAt || at])
+  };
+  out.proofs = {
+    cols: ["id", "promise_id", "message_id", "kind", "description", "verified_by", "confidence", "created_at"],
+    rows: S.proofs.map(pr => [pr.id, pr.promiseId, pr.messageId || null, pr.kind,
+      pr.description || null, pr.verifiedBy || "agent", null, pr.createdAt || at])
+  };
+  /* A snapshot needs a real vendors row to point at: a score for a client or the
+     owner would be a dangling foreign key, so those are skipped. */
+  out.vendor_score_snapshots = {
+    cols: ["id", "vendor_id", "as_of", "promises_total", "promises_kept", "reliability", "band", "computed_at"],
+    rows: S.scoreHistory.filter(h => vendorContacts[h.contactId]).map(h => [
+      "snap_" + String(h.contactId).replace(/[^A-Za-z0-9_]/g, "") + "_" + String(h.asOf).replace(/-/g, ""),
+      vendorIdFor(h.contactId), h.asOf, Number(h.total || 0), null,
+      h.reliability == null ? null : Number(h.reliability), h.band || null, at])
+  };
+  return out;
+}
+
+/* Every row of one table as plain objects, ready for JSON.
+
+   `bizId` exists because two firms cannot share 'biz_local': it is a primary
+   key in a shared database. The local SQL export keeps the friendly id; a
+   cloud push passes the business id the signed-in user owns. */
+function rowObjects(table, bizId) {
+  const t = tableRows()[table];
+  if (!t) return [];
+  const rows = t.rows.map(r => {
+    const o = {};
+    t.cols.forEach((c, i) => { o[c] = r[i] === undefined ? null : r[i]; });
+    return o;
+  });
+  if (!bizId) return rows;
+  const prj = "prj_" + String(bizId).replace(/[^A-Za-z0-9_]/g, "").slice(-16);
+  for (const r of rows) {
+    if (Object.prototype.hasOwnProperty.call(r, "business_id")) r.business_id = bizId;
+    if (table === "businesses") r.id = bizId;
+    if (table === "projects") r.id = prj;
+  }
+  return rows;
+}
+
+/* SQL export. Same rows, rendered as literals — the output loads into
+   db/schema.sql unchanged, which is the whole point of the single-file build. */
+function sqlFor() {
+  const lit = (v) => {
+    if (v == null) return "NULL";
+    if (typeof v === "number") return isFinite(v) ? String(v) : "NULL";
+    return "'" + String(v).replace(/'/g, "''") + "'";
+  };
+  const ins = (table, cols, vals) => "INSERT INTO " + table + " (" + cols.join(",") + ") VALUES (" + vals.join(",") + ");";
+  const T = tableRows();
+  const out = [
+    "-- Vachan local export — " + nowIso(),
+    "-- Loads into db/schema.sql unchanged (SQLite or Postgres).",
+    "-- Every business_id is pinned to 'biz_local'; change it before loading",
+    "-- two businesses into one database.",
+    "--",
+    "-- Ordered by foreign key: businesses, projects, contacts, vendors,",
+    "-- conversations, messages, promises, promise_events, follow_ups, proofs.",
+    ""
+  ];
+  for (const table of ROW_ORDER) {
+    const t = T[table];
+    if (!t) continue;
+    for (const r of t.rows) out.push(ins(table, t.cols, r.map(lit)));
+  }
+  return out.join("\n");
+}
+
+/* ==========================================================================
+   CLOUD — Supabase as the shared ledger
+
+   The local build always works: localStorage stays the source of truth while
+   you are offline. A sync is a push of everything (an idempotent upsert — the
+   app never deletes on push) followed by a pull of what changed elsewhere.
+   A failed request therefore costs nothing; it just means you are still local.
+
+   Two keys with different lifetimes, deliberately kept out of the JSON backup:
+     vachan.cloud.config.v1   URL, anon key, business id, last sync times.
+                              Public by design — the anon key is meant to ship
+                              inside the page, and db/supabase_rls.sql is what
+                              makes that safe rather than reckless.
+     vachan.cloud.session.v1  access and refresh tokens. Cleared on sign out.
+   ========================================================================== */
+const CLOUD_CONFIG_KEY = "vachan.cloud.config.v1";
+const CLOUD_SESSION_KEY = "vachan.cloud.session.v1";
+const PUSH_BATCH = 100;
+
+function readJson(key, fallback) {
+  try { const raw = store.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch (e) { return fallback; }
+}
+function writeJson(key, v) {
+  try { store.setItem(key, JSON.stringify(v)); return true; } catch (e) { return false; }
+}
+
+function cloudConfig() {
+  const c = readJson(CLOUD_CONFIG_KEY, null) || {};
+  return { url: String(c.url || "").replace(/\/+$/, ""), anonKey: c.anonKey || "",
+    businessId: c.businessId || "", email: c.email || "",
+    lastPushAt: c.lastPushAt || null, lastPullAt: c.lastPullAt || null };
+}
+function saveCloudConfig(c) { return writeJson(CLOUD_CONFIG_KEY, c); }
+function cloudSession() { return readJson(CLOUD_SESSION_KEY, null); }
+function saveCloudSession(s) { return writeJson(CLOUD_SESSION_KEY, s); }
+function clearCloudSession() { try { store.removeItem(CLOUD_SESSION_KEY); } catch (e) {} }
+
+/* ISO strings from three different writers (this page, psycopg, a Postgres
+   default) do not compare safely as strings — offsets differ. Compare epochs. */
+const ts = (v) => { const t = Date.parse(v); return isNaN(t) ? 0 : t; };
+
+async function cloudFetch(path, opts) {
+  const o = opts || {};
+  const cfg = cloudConfig();
+  if (!cfg.url || !cfg.anonKey) throw new Error("No project connected — paste your Supabase URL and anon key first.");
+  const s = cloudSession();
+  const headers = Object.assign({
+    "apikey": cfg.anonKey,
+    "Authorization": "Bearer " + ((s && s.accessToken) || cfg.anonKey),
+    "Content-Type": "application/json"
+  }, o.headers || {});
+  const res = await fetch(cfg.url + path, {
+    method: o.method || "GET",
+    headers: headers,
+    body: o.body === undefined ? undefined : JSON.stringify(o.body)
+  });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+  if (!res.ok) {
+    const msg = (data && (data.message || data.error_description || data.msg || data.hint || data.error)) ||
+      (typeof data === "string" ? data.slice(0, 240) : "");
+    const err = new Error("Supabase " + res.status + (msg ? " — " + msg : ""));
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+function adoptSession(d) {
+  const s = { accessToken: d.access_token, refreshToken: d.refresh_token,
+    userId: (d.user && d.user.id) || null,
+    expiresAt: Date.now() + Number(d.expires_in || 3600) * 1000 };
+  saveCloudSession(s);
+  return s;
+}
+
+async function cloudSignUp(email, password) {
+  const d = await cloudFetch("/auth/v1/signup", { method: "POST", body: { email: email, password: password } });
+  /* With "Confirm email" on (the default), Supabase creates the user and
+     returns no session. That is not an error — it is a check-your-inbox. */
+  if (d && d.access_token) { adoptSession(d); return { confirmed: true }; }
+  return { confirmed: false };
+}
+
+async function cloudSignIn(email, password) {
+  const d = await cloudFetch("/auth/v1/token?grant_type=password", { method: "POST", body: { email: email, password: password } });
+  adoptSession(d);
+  const cfg = cloudConfig();
+  cfg.email = email;
+  saveCloudConfig(cfg);
+  return d;
+}
+
+async function cloudEnsureToken() {
+  const s = cloudSession();
+  if (!s || !s.accessToken) throw new Error("Sign in first.");
+  if (s.expiresAt && Date.now() < s.expiresAt - 60000) return s;
+  if (!s.refreshToken) { clearCloudSession(); throw new Error("Session expired — sign in again."); }
+  const cfg = cloudConfig();
+  const res = await fetch(cfg.url + "/auth/v1/token?grant_type=refresh_token", {
+    method: "POST",
+    headers: { "apikey": cfg.anonKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: s.refreshToken })
+  });
+  if (!res.ok) { clearCloudSession(); throw new Error("Session expired — sign in again."); }
+  return adoptSession(await res.json());
+}
+
+/* ---- push: every table, in foreign-key order, one upsert per batch ---- */
+
+/* The push expressed as data rather than as a loop with awaits inside it: the
+   ordering and the headers are then testable without a network, which is the
+   only part of sync that can be proved on a machine with no project. */
+function cloudPushPlan(bizId) {
+  const plan = [];
+  for (const table of ROW_ORDER) {
+    const rows = rowObjects(table, bizId);
+    for (let i = 0; i < rows.length; i += PUSH_BATCH) {
+      plan.push({
+        table: table,
+        path: "/rest/v1/" + table + "?on_conflict=id",
+        headers: { "Prefer": "resolution=merge-duplicates,return=minimal" },
+        body: rows.slice(i, i + PUSH_BATCH)
+      });
+    }
+  }
+  return plan;
+}
+
+async function cloudPush() {
+  const cfg = cloudConfig();
+  if (!cfg.businessId) throw new Error("Not connected to a business yet.");
+  await cloudEnsureToken();
+  let sent = 0;
+  for (const step of cloudPushPlan(cfg.businessId)) {
+    await cloudFetch(step.path, { method: "POST", headers: step.headers, body: step.body });
+    sent += step.body.length;
+  }
+  const next = cloudConfig();
+  next.lastPushAt = nowIso();
+  saveCloudConfig(next);
+  return sent;
+}
+
+/* ---- pull: rows back into the shapes this page renders ---- */
+const HYDRATE = {
+  contacts: (r) => ({ id: r.id, name: r.name, phone: r.phone || undefined, kind: r.kind, createdAt: r.created_at }),
+  conversations: (r) => ({ id: r.id, channel: r.channel, kind: r.kind, externalId: r.external_id,
+    title: r.title, source: r.source, createdAt: r.created_at }),
+  messages: (r) => ({ id: r.id, conversationId: r.conversation_id, contactId: r.sender_contact_id,
+    senderRawName: r.sender_raw_name, direction: r.direction, kind: r.kind, body: r.body,
+    transcript: r.transcript, sentAt: r.sent_at, ingestedAt: r.ingested_at, source: r.source }),
+  /* A row written by the Python agent before de-dupe keys existed has none, so
+     rebuild the same identity from the columns rather than leaving a promise
+     that nothing can ever match. */
+  promises: (r) => ({ id: r.id,
+    dedupeKey: r.dedupe_key || ((r.who_role || "unknown") + "|" + (r.who_raw || "") + "|" +
+      (r.category || "") + "|" + (r.object || "")),
+    statement: r.statement, category: r.category,
+    object: r.object, whoRaw: r.who_raw, whoContactId: r.who_contact_id, whoRole: r.who_role,
+    direction: r.direction, sourceQuote: r.source_quote,
+    sourceMessageIds: r.source_message_id ? [r.source_message_id] : [],
+    sentAt: r.promised_at || r.created_at, dueOn: r.due_on, dueRaw: r.due_raw,
+    dueConfidence: r.due_confidence, confidence: r.confidence,
+    needsClarification: !!r.needs_clarification, clarifyingQuestion: r.clarifying_question,
+    status: r.status, createdAt: r.created_at, closedAt: r.closed_at, closedBy: r.closed_by,
+    attempts: Number(r.attempts || 0), reschedules: Number(r.reschedules || 0),
+    autoMissed: !!r.auto_missed, updatedAt: r.updated_at }),
+  follow_ups: (r) => ({ id: r.id, promiseId: r.promise_id, attempt: Number(r.attempt || 1),
+    scheduledFor: r.scheduled_for, channel: r.channel, tone: r.tone, status: r.status,
+    draftText: r.draft_text, sentAt: r.sent_at, createdAt: r.created_at }),
+  promise_events: (r) => ({ id: r.id, promiseId: r.promise_id, kind: r.kind,
+    detail: r.detail, actor: r.actor, at: r.at }),
+  proofs: (r) => ({ id: r.id, promiseId: r.promise_id, messageId: r.message_id, kind: r.kind,
+    description: r.description, verifiedBy: r.verified_by, createdAt: r.created_at })
+};
+
+/* Newest wins, and "newest" is the row's own clock — updated_at for promises,
+   created_at for things that only ever appear once. Local stays on a tie, so a
+   pull can never quietly undo an edit made seconds ago on this device. */
+function mergeRemote(pulled) {
+  const counts = { added: 0, updated: 0, kept: 0 };
+  const take = (list, obj, remoteStamp, localStamp) => {
+    const i = list.findIndex(x => x.id === obj.id);
+    if (i < 0) { list.push(obj); counts.added++; return; }
+    if (ts(remoteStamp) > ts(localStamp(list[i]))) { list[i] = obj; counts.updated++; }
+    else counts.kept++;
+  };
+  for (const r of pulled.contacts || []) take(S.contacts, HYDRATE.contacts(r), r.created_at, x => x.createdAt);
+  for (const r of pulled.conversations || []) take(S.conversations, HYDRATE.conversations(r), r.created_at, x => x.createdAt);
+  for (const r of pulled.messages || []) take(S.messages, HYDRATE.messages(r), r.sent_at, x => x.sentAt);
+  for (const r of pulled.promises || []) take(S.promises, HYDRATE.promises(r), r.updated_at,
+    x => x.updatedAt || x.closedAt || x.createdAt);
+  for (const r of pulled.follow_ups || []) take(S.followUps, HYDRATE.follow_ups(r), r.created_at, x => x.createdAt);
+  for (const r of pulled.promise_events || []) take(S.events, HYDRATE.promise_events(r), r.at, () => "");
+  for (const r of pulled.proofs || []) take(S.proofs, HYDRATE.proofs(r), r.created_at, () => "");
+  /* The ledger and the transcript have an order the UI depends on. */
+  S.events.sort((a, b) => ts(b.at) - ts(a.at));
+  if (S.events.length > MAX_EVENTS) S.events.length = MAX_EVENTS;
+  S.messages.sort((a, b) => ts(a.sentAt) - ts(b.sentAt));
+  return counts;
+}
+
+async function cloudPull() {
+  const cfg = cloudConfig();
+  if (!cfg.businessId) throw new Error("Not connected to a business yet.");
+  await cloudEnsureToken();
+  const biz = encodeURIComponent(cfg.businessId);
+  const pulled = {};
+  for (const table of ["contacts", "conversations", "messages", "promises", "follow_ups"]) {
+    pulled[table] = await cloudFetch("/rest/v1/" + table + "?select=*&business_id=eq." + biz);
+  }
+  /* Events and proofs have no business_id: they hang off a promise. RLS still
+     scopes them, and this filter finishes the job in case the user belongs to
+     more than one firm. */
+  const known = {};
+  for (const p of pulled.promises || []) known[p.id] = true;
+  for (const table of ["promise_events", "proofs"]) {
+    const rows = await cloudFetch("/rest/v1/" + table + "?select=*");
+    pulled[table] = (rows || []).filter(r => known[r.promise_id]);
+  }
+  const counts = mergeRemote(pulled);
+  const next = cloudConfig();
+  next.lastPullAt = nowIso();
+  saveCloudConfig(next);
+  save();
+  render();
+  return counts;
+}
+
+/* ---- the panel ---- */
+function cloudLine(what, at) {
+  return '<div class="note">' + what + ": " + (at ? new Date(at).toLocaleString("en-IN") : "never") + "</div>";
+}
+
+function renderCloud() {
+  const panel = $("#cloudPanel");
+  if (!panel) return;
+  const cfg = cloudConfig();
+  const s = cloudSession();
+  const connected = !!(cfg.url && cfg.anonKey);
+  const signedIn = !!(s && s.accessToken);
+  const rows = ROW_ORDER.reduce((n, t) => n + rowObjects(t).length, 0);
+
+  const form = (id) => { const el = $(id); return el && document.activeElement !== el; }; 
+  if (!signedIn) {
+    panel.innerHTML =
+      '<div class="grid" style="gap:12px">' +
+        '<div><div class="label">Project URL</div><input id="cloudUrl" placeholder="https://abcdefgh.supabase.co" value="' + esc(cfg.url) + '"></div>' +
+        '<div><div class="label">anon public key</div><input id="cloudKey" placeholder="eyJhbGciOi..." value="' + esc(cfg.anonKey) + '"></div>' +
+        '<div><div class="label">Email</div><input id="cloudEmail" type="email" placeholder="you@example.com" value="' + esc(cfg.email) + '"></div>' +
+        '<div><div class="label">Password</div><input id="cloudPass" type="password" placeholder="at least 6 characters"></div>' +
+        '<div class="row"><button class="btn" data-cloud="connect">Save project</button>' +
+        '<button class="btn primary" data-cloud="signin">Sign in</button>' +
+        '<button class="btn" data-cloud="signup">Create account</button></div>' +
+        '<div class="note" id="cloudStatus">' +
+          (connected ? "Project saved. Sign in to sync — or create an account; with email confirmation on, check your inbox before signing in."
+                     : "Not connected. The page still works on its own; this only adds a shared database.") +
+        '</div>' +
+      '</div>';
+    return;
+  }
+
+  panel.innerHTML =
+    '<div class="card" style="padding:12px">' +
+      '<div class="row" style="justify-content:space-between">' +
+        '<div><b>' + esc(cfg.url.replace(/^https:\/\//, "")) + '</b> <span class="pill done">signed in</span>' +
+          (cfg.email ? ' <span class="note">' + esc(cfg.email) + '</span>' : '') + '</div>' +
+        '<div class="row"><button class="btn" data-cloud="refresh">Reload</button>' +
+        '<button class="btn" data-cloud="signout">Sign out</button></div>' +
+      '</div>' +
+      '<div class="note" style="margin-top:6px">business <span class="mono">' + esc(cfg.businessId || "—") + '</span> · ' + plural(rows, "row") + ' in this browser</div>' +
+      '<div class="row" style="margin-top:10px"><button class="btn primary" data-cloud="push">Push to Supabase</button>' +
+        '<button class="btn" data-cloud="pull">Pull changes</button>' +
+        '<button class="btn" data-cloud="sync">Sync both ways</button></div>' +
+      cloudLine("Last push", cfg.lastPushAt) + cloudLine("Last pull", cfg.lastPullAt) +
+      '<div class="note" id="cloudStatus" style="margin-top:8px">Push writes every row you have; it never deletes. Pull takes rows that are newer elsewhere and keeps yours on a tie.</div>' +
+    '</div>';
+  if (form("#cloudPass")) { const p = $("#cloudPass"); if (p) p.value = ""; }
+}
+
+function cloudSay(msg, bad) {
+  const node = $("#cloudStatus");
+  if (node) { node.textContent = msg; node.style.color = bad ? "var(--bad, #c0392b)" : ""; }
+}
+
+/* One delegated listener rather than edits to the action switch: the cloud
+   panel is optional, and its absence must never be able to break the rest. */
+document.addEventListener("click", async (e) => {
+  const el = e.target && e.target.closest ? e.target.closest("[data-cloud]") : null;
+  if (!el) return;
+  e.preventDefault();
+  const what = el.getAttribute("data-cloud");
+  const val = (id) => { const n = $(id); return n ? n.value.trim() : ""; };
+  try {
+    if (what === "connect") {
+      const url = val("#cloudUrl").replace(/\/+$/, "");
+      const key = val("#cloudKey");
+      if (!/^https:\/\/\S+$/.test(url)) throw new Error("That does not look like a project URL — it should start with https://");
+      if (key.length < 20) throw new Error("That anon key looks too short. Copy the whole key from Project settings → API.");
+      const cur = cloudConfig();
+      saveCloudConfig({ url: url, anonKey: key, businessId: cur.businessId || uid("biz"),
+        email: val("#cloudEmail") || cur.email, lastPushAt: cur.lastPushAt, lastPullAt: cur.lastPullAt });
+      renderCloud();
+      cloudSay("Project saved. Now sign in or create an account.");
+      return;
+    }
+    if (what === "signin" || what === "signup") {
+      const email = val("#cloudEmail"), pass = val("#cloudPass");
+      if (!email || !pass) throw new Error("Email and password, please.");
+      if (pass.length < 6) throw new Error("Supabase requires at least 6 characters.");
+      cloudSay(what === "signin" ? "Signing in…" : "Creating your account…");
+      if (what === "signup") {
+        const r = await cloudSignUp(email, pass);
+        if (!r.confirmed) { cloudSay("Account created. Check your inbox to confirm, then sign in."); return; }
+      } else {
+        await cloudSignIn(email, pass);
+      }
+      renderCloud();
+      cloudSay("Signed in. Push your ledger to start the shared copy.");
+      return;
+    }
+    if (what === "signout") { clearCloudSession(); renderCloud(); return; }
+    if (what === "refresh") { renderCloud(); return; }
+    if (what === "push" || what === "sync") {
+      cloudSay("Pushing…");
+      const n = await cloudPush();
+      cloudSay("Pushed " + n + " row" + (n === 1 ? "" : "s") + ".");
+      if (what === "push") { renderCloud(); return; }
+    }
+    if (what === "pull" || what === "sync") {
+      cloudSay("Pulling…");
+      const c = await cloudPull();
+      renderCloud();
+      cloudSay("Pulled: " + c.added + " new, " + c.updated + " updated, " + c.kept + " kept (yours were newer).");
+    }
+  } catch (err) {
+    const msg = String((err && err.message) || err);
+    cloudSay(msg, true);
+    if (err && err.status === 401) clearCloudSession();
+  }
+});
+
+/* ==========================================================================
+   WIRING
+   ========================================================================== */
+function alertBox(kind, html) {
+  $("#alert").innerHTML = html ? '<div class="banner ' + (kind === "bad" ? "bad" : "") + '">' + html + "</div>" : "";
+}
+
+async function doIngest() {
+  const text = $("#ingestText").value.trim();
+  if (!text) { alertBox("bad", "Paste some chat text first — or press “Load sample business”."); return; }
+  const isVoice = $("#asVoice").checked;
+  const msgs = ingest(text, $("#ingestChannel").value, isVoice);
+  if (!msgs.length) { alertBox("bad", "Could not read any messages out of that text."); return; }
+  try {
+    const r = await runPipeline(msgs, []);
+    const fresh = S.promises.slice(-r.fresh);
+    $("#extractResult").innerHTML =
+      "<div class='row'><span class='pill done'>" + plural(msgs.length, "message") + "</span><span class='pill'>" + plural(r.fresh, "promise") + "</span><span class='pill'>" + r.closed + " closed</span><span class='pill'>" + plural(r.planned, "follow-up draft") + "</span></div>" +
+      (fresh.length ? "<div style='margin-top:10px'>" + fresh.map(p => "<div class='msg'><b>" + esc(p.statement) + "</b><div class='note'>" + esc(p.whoRaw) + " · " + esc(p.category) + " · due " + esc(p.dueOn || "not promised") +
+        " · conf " + Math.round(p.confidence * 100) + "%</div><div class='quote'>\"" + esc(String(p.sourceQuote).slice(0, 140)) + "\"</div>" +
+        (p.needsClarification ? "<div class='note' style='color:var(--warn)'>needs clarification: " + esc(p.clarifyingQuestion) + "</div>" : "") + "</div>").join("") + "</div>"
+        : "<div class='note' style='margin-top:10px'>No new commitments in that text. That is a valid result — the extractor is meant to stay quiet when nobody promised anything.</div>");
+    alertBox("", "");
+  } catch (e) {
+    alertBox("bad", "Extraction failed: " + esc(e.message) + " — switching back to mock mode keeps this working offline.");
+  }
+  $("#ingestText").value = "";
+  render();
+}
+
+async function seedAndRun() {
+  seed();
+  await runPipeline(S.messages.slice(), []);
+  planFollowUps();
+  render();
+  alertBox("", "Sample business loaded: " + S.messages.length + " messages, " + S.promises.length +
+    " promises extracted, " + S.followUps.length + " follow-up drafts. Everything below is computed live — nothing was hard-coded.");
+}
+
+/* Closing from the ledger is an attestation. It is honest about that: the
+   proof row says verified_by=owner, so the scorer can tell the difference
+   between "the owner says so" and "a photo arrived". */
+function closeWithAttestation(p) {
+  const late = p.dueOn && daysBetween(new Date(p.dueOn), new Date()) > 0;
+  p.status = late ? "late" : "done";
+  p.closedAt = nowIso();
+  p.closedBy = "owner";
+  p.autoMissed = false;
+  p.updatedAt = nowIso();
+  S.proofs.push({ id: uid("pf"), promiseId: p.id, kind: "text_claim",
+    description: "Closed by the owner from the ledger (no photo attached)",
+    verifiedBy: "owner", createdAt: nowIso() });
+  logEvent(p.id, "fulfilled", "closed as " + p.status + " by owner, unverified", "owner");
+  S.runs.unshift({ id: uid("run"), agent: "closer", model: "owner", status: "ok", inputRef: p.id,
+    note: "Owner closed as " + p.status + " (attestation, not proof)", at: nowIso() });
+}
+
+/* The clarify loop has to be closable by a human too. A vendor may answer on a
+   phone call, or never answer at all — the ledger must not stay stuck. */
+function setPromiseDate(p) {
+  const answer = prompt("When was this promised for?\n\nA date (YYYY-MM-DD), or: kal, parso, aaj, a weekday, month end.\nLeave it empty to remove the date.", p.dueOn || ymd(new Date()));
+  if (answer === null) return;
+  const text = answer.trim();
+  if (!text) {
+    p.dueOn = null; p.dueRaw = null; p.dueConfidence = null;
+    p.needsClarification = true;
+    p.clarifyingQuestion = "By when was this promised?";
+    p.updatedAt = nowIso();
+    logEvent(p.id, "date_cleared", "date removed", "owner");
+    save(); render();
+    alertBox("", "Date removed — it is back under “needs a date” and will not be chased until it has one.");
+    return;
+  }
+  const iso = parseDateAnswer(text);
+  if (!iso) {
+    alertBox("bad", "Could not read “" + esc(text) + "”. Use YYYY-MM-DD, or kal / parso / aaj / a weekday name.");
+    return;
+  }
+  p.dueOn = iso;
+  p.dueRaw = text;
+  p.dueConfidence = /^\d{4}-\d{2}-\d{2}$/.test(text) ? 1 : 0.8;
+  p.needsClarification = false;
+  p.clarifyingQuestion = null;
+  p.updatedAt = nowIso();
+  if (p.status === "missed") { p.status = "open"; p.autoMissed = false; p.closedBy = null; }
+  logEvent(p.id, "date_set", "owner set " + iso + " (“" + text + "”)", "owner");
+  save(); render();
+  alertBox("", "Due " + iso + " — the chaser now has something to work from.");
+}
+
+function parseDateAnswer(text) {
+  const t = String(text).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
+    const d = asDay(t);
+    return isNaN(d) ? null : ymd(d);
+  }
+  const phrase = parseTimePhrase(t, new Date());
+  return phrase ? ymd(phrase.due) : null;
+}
+
+document.addEventListener("click", async (e) => {
+  const tab = e.target.closest("nav button");
+  if (tab) {
+    $$("nav button").forEach(b => b.classList.toggle("on", b === tab));
+    $$("main section").forEach(s => s.classList.toggle("on", s.id === "tab-" + tab.dataset.tab));
+    if (tab.dataset.tab === "db") { $("#sqlOut").value = sqlFor(); }
+    if (tab.dataset.tab === "settings") fillSettings();
+    return;
+  }
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const a = btn.dataset.action, id = btn.dataset.id;
+  switch (a) {
+    case "seed": {
+      if (S.promises.length && !confirm("Replace what is in this browser with the sample business? Export a backup first if you want to keep it.")) break;
+      await seedAndRun();
+      break;
+    }
+    case "reset": {
+      if (S.promises.length && !confirm("Clear everything in this browser? This cannot be undone.")) break;
+      for (const k of [KEY].concat(LEGACY_KEYS)) { try { store.removeItem(k); } catch (e) {} }
+      S = blankState(); save(); render();
+      alertBox("", "Reset. Local state cleared — the sample reloads on next refresh.");
+      break;
+    }
+    case "ingest": await doIngest(); break;
+    case "refresh": {
+      const aged = refreshStatuses();
+      const planned = planFollowUps();
+      const snaps = snapshotScores();
+      save(); render();
+      alertBox("", "Recomputed: " + plural(aged.length, "promise") + " aged to missed, " +
+        plural(planned, "new draft") + ", " + plural(snaps, "score snapshot") + ".");
+      break;
+    }
+    case "planFollowups": {
+      const n = planFollowUps(); render();
+      alertBox(n ? "" : "bad", n ? n + " draft(s) queued." : "Nothing new to chase — no overdue promise without a draft yet.");
+      break;
+    }
+    case "simulateReplies": {
+      const n = simulateReplies(); refreshStatuses(); render();
+      alertBox(n ? "" : "bad", n ? n + " vendor repl" + (n === 1 ? "y" : "ies") + " simulated (clearly marked in the message log)." : "Send a follow-up first — replies only arrive after something was sent.");
+      break;
+    }
+    case "send": sendFollowUp(id); render(); alertBox("", "Sent. One message, one ask, in the owner's voice."); break;
+    case "skip": { const f = S.followUps.find(x => x.id === id); if (f) f.status = "skipped"; save(); render(); break; }
+    case "close": {
+      const p = S.promises.find(x => x.id === id);
+      if (!p) break;
+      closeWithAttestation(p);
+      save(); render();
+      alertBox("", "Closed as " + p.status + ". Recorded as your word, not as verified proof — a photo of the delivery is what counts as proof.");
+      break;
+    }
+    case "missed": {
+      const p = S.promises.find(x => x.id === id);
+      if (!p) break;
+      p.status = "missed";
+      p.autoMissed = false;
+      p.closedBy = "owner";
+      p.closedAt = null;          // nothing arrived, so there is no closure time
+      p.updatedAt = nowIso();
+      logEvent(p.id, "missed", "marked as never delivered", "owner");
+      save(); render();
+      alertBox("", "Marked as never delivered. The chaser stops for this one.");
+      break;
+    }
+    case "reopen": {
+      const p = S.promises.find(x => x.id === id);
+      if (!p) break;
+      p.status = "open";
+      p.autoMissed = false;
+      p.closedAt = null;
+      p.closedBy = null;
+      p.updatedAt = nowIso();
+      // Retract the owner's own attestation, or it keeps inflating nothing —
+      // a photo that arrived is evidence and stays.
+      S.proofs = S.proofs.filter(pr => !(pr.promiseId === p.id && pr.verifiedBy === "owner"));
+      logEvent(p.id, "reopened", "back in the ledger", "owner");
+      save(); render();
+      alertBox("", "Reopened — it is chased again from its own due date.");
+      break;
+    }
+    case "setdate": {
+      const p = S.promises.find(x => x.id === id);
+      if (!p) break;
+      setPromiseDate(p);
+      break;
+    }
+    case "selftest": runSelfTest(); break;
+    case "clarify": {
+      const p = S.promises.find(x => x.id === id);
+      if (!p) break;
+      const who = (S.contacts.find(c => c.id === p.whoContactId) || {}).name || p.whoRaw;
+      S.messages.push({ id: uid("msg"), conversationId: S.conversations[0] ? S.conversations[0].id : null, senderRawName: S.meta.owner,
+        contactId: p.whoContactId, direction: "outbound", kind: "text",
+        body: who + ", " + p.statement.toLowerCase() + " — kis date tak ho jayega?", transcript: null,
+        sentAt: nowIso(), ingestedAt: nowIso(), source: "manual" });
+      S.messages.sort((x, y) => x.sentAt.localeCompare(y.sentAt));
+      S.runs.unshift({ id: uid("run"), agent: "chaser", model: S.settings.mode, status: "ok", inputRef: p.id, note: "Clarifying question asked (no date was promised)", at: nowIso() });
+      save(); render(); alertBox("", "Clarifying question queued as a message — Vachan never chases a promise nobody actually made.");
+      break;
+    }
+    case "exportJson": {
+      const blob = new Blob([JSON.stringify(S, null, 2)], { type: "application/json" });
+      const a2 = document.createElement("a");
+      a2.href = URL.createObjectURL(blob); a2.download = "vachan-backup.json"; a2.click();
+      break;
+    }
+    case "showSql": $("#sqlOut").value = sqlFor(); break;
+    case "saveSettings": {
+      S.settings = { mode: $("#setMode").value, baseUrl: $("#setBase").value.trim(), model: $("#setModel").value.trim(), apiKey: $("#setKey").value };
+      save(); render(); $("#settingsSaved").textContent = "saved " + new Date().toLocaleTimeString("en-IN");
+      break;
+    }
+    case "saveBusiness": {
+      S.meta.business = $("#setBiz").value || S.meta.business;
+      S.meta.owner = $("#setOwner").value || S.meta.owner;
+      S.meta.project = $("#setProject").value || S.meta.project;
+      save(); render(); alertBox("", "Saved.");
+      break;
+    }
+  }
+});
+
+function fillSettings() {
+  $("#setMode").value = S.settings.mode || "mock";
+  $("#setBase").value = S.settings.baseUrl || "";
+  $("#setModel").value = S.settings.model || "";
+  $("#setKey").value = S.settings.apiKey || "";
+  $("#setBiz").value = S.meta.business || "";
+  $("#setOwner").value = S.meta.owner || "";
+  $("#setProject").value = S.meta.project || "";
+}
+
+/* An import used to replace live state with whatever JSON was in the file, so a
+   stray file wiped the ledger. Validate first, confirm, then migrate. */
+function validateBackup(obj) {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
+  const looksRight = ["promises", "messages", "contacts", "followUps"].some(k => Array.isArray(obj[k]));
+  if (!looksRight) return null;
+  return migrate(obj);
+}
+
+$("#importFile").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    let parsed;
+    try { parsed = JSON.parse(r.result); }
+    catch (err) {
+      alertBox("bad", "That file is not valid JSON. Nothing was imported.");
+      e.target.value = "";
+      return;
+    }
+    const next = validateBackup(parsed);
+    if (!next) {
+      alertBox("bad", "That JSON does not look like a Vachan backup (no promises, messages or contacts). Nothing was imported.");
+      e.target.value = "";
+      return;
+    }
+    if (S.promises.length && !confirm("Replace " + plural(S.promises.length, "promise") + " and " +
+      plural(S.messages.length, "message") + " in this browser with the backup?")) {
+      e.target.value = "";
+      return;
+    }
+    S = next;
+    save(); render();
+    alertBox("", "Imported " + plural(S.promises.length, "promise") + " and " + plural(S.messages.length, "message") + ".");
+    e.target.value = "";
+  };
+  r.readAsText(f);
+});
+
+$("#pSearch").addEventListener("input", (e) => { view.q = e.target.value; render(); });
+$("#pStatus").addEventListener("change", (e) => { view.status = e.target.value; render(); });
+$("#pDir").addEventListener("change", (e) => { view.dir = e.target.value; render(); });
+
+/* ==========================================================================
+   SELF-TEST
+   The build verifies itself in the browser, with no toolchain — which is the
+   only honest way to ship this when the machine has no working shell. Each
+   case runs on a throwaway state, so a test that mutates data cannot touch the
+   owner's ledger, and the real state is restored even when a case throws.
+   ========================================================================== */
+const TESTS = [];
+function test(name, fn) { TESTS.push({ name: name, fn: fn }); }
+
+function assertEq(actual, expected, what) {
+  const a = JSON.stringify(actual), e = JSON.stringify(expected);
+  if (a !== e) throw new Error((what || "value") + ": expected " + e + ", got " + a);
+}
+function assertTrue(cond, what) { if (!cond) throw new Error(what || "expected true, got false"); }
+function assertNear(actual, expected, tol, what) {
+  if (Math.abs(actual - expected) > tol) throw new Error((what || "value") + ": expected ~" + expected + ", got " + actual);
+}
+
+/* A message shaped exactly as ingest() produces one. */
+function TMsg(body, opts) {
+  const o = opts || {};
+  const direction = o.direction || "inbound";
+  const who = o.who || (direction === "outbound" ? S.meta.owner : "Imran bhai");
+  const c = contactFor(who, direction === "outbound" ? "owner" : "vendor");
+  return {
+    id: o.id || uid("msg"), conversationId: "cv_test", senderRawName: who,
+    contactId: c.id, direction: direction, kind: o.media || "text", body: body,
+    transcript: o.media === "voice" ? body : null,
+    sentAt: (o.at || new Date()).toISOString(), ingestedAt: nowIso(), source: "export"
+  };
+}
+
+function TPromise(contactId, status, opts) {
+  const o = opts || {};
+  return {
+    id: uid("pr"), dedupeKey: "t|" + contactId + "|" + status,
+    statement: o.statement || "Deliver the ply to site",
+    category: o.category || "material", object: o.object || "ply",
+    whoRaw: o.whoRaw || "Imran bhai", whoContactId: contactId, whoRole: "vendor",
+    direction: "they_owe", sourceQuote: "test", sourceMessageIds: [],
+    sentAt: nowIso(), dueOn: o.dueOn || null, dueRaw: o.dueRaw || null,
+    dueConfidence: 0.8, confidence: 0.8, needsClarification: false, clarifyingQuestion: null,
+    status: status, createdAt: nowIso(), closedAt: o.closedAt || null, closedBy: o.closedBy || null,
+    attempts: 0, reschedules: o.reschedules || 0
+  };
+}
+
+/* ---- ingestion ---- */
+test("parses a WhatsApp export in both line formats", () => {
+  const msgs = parseChatText("[15/03/26, 6:31 PM] Imran bhai: laminate kal shaam tak\n15/03/26, 18:33 - Ramesh: theek hai");
+  assertEq(msgs.length, 2, "message count");
+  assertEq(msgs[0].who, "Imran bhai", "first sender");
+  assertEq(msgs[0].when.getHours(), 18, "6:31 PM reads as 18h");
+  assertEq(msgs[1].who, "Ramesh", "legacy format sender");
+});
+
+test("a vendor whose name contains “me” is not the owner", () => {
+  assertEq(isOwnerName("Ramesh"), false, "Ramesh");
+  assertEq(isOwnerName("Imran bhai"), false, "Imran");
+  assertEq(isOwnerName("Rakesh (me)"), true, "(me) marker");
+});
+
+test("a role prefix is stripped when addressing someone", () => {
+  assertEq(nickName("Painter Ramesh"), "Ramesh");
+  assertEq(nickName("Ravi Electrician"), "Ravi");
+  assertEq(nickName("Imran bhai"), "Imran");
+});
+
+/* ---- dates ---- */
+test("Hinglish dates resolve against the message, not against today", () => {
+  const base = new Date(2026, 2, 10, 9, 0);   // Tuesday 10 Mar 2026
+  const at1 = (s) => parseTimePhrase(s, base);
+  assertEq(ymd(at1("kal shaam tak bhej dunga").due), "2026-03-11", "kal");
+  assertEq(at1("kal shaam tak bhej dunga").due.getHours(), 18, "shaam is 18h");
+  assertEq(ymd(at1("parso tak kar dunga").due), "2026-03-12", "parso");
+  assertEq(ymd(at1("aaj raat tak ho jayega").due), "2026-03-10", "aaj");
+  assertEq(ymd(at1("Monday tak pakka").due), "2026-03-16", "next Monday");
+  assertEq(ymd(at1("20th ko de dunga").due), "2026-03-20", "20th this month");
+  assertEq(ymd(parseTimePhrase("20th ko", new Date(2026, 2, 25, 9, 0)).due), "2026-04-20", "20th rolls forward");
+  assertEq(ymd(at1("month end tak").due), "2026-03-31", "month end");
+  assertEq(at1("theek hai bhai"), null, "no date promised");
+});
+
+test("dates stay on the local calendar (no UTC off-by-one)", () => {
+  assertEq(daysBetween("2026-03-13", "2026-03-14"), 1, "one day apart");
+  assertEq(asDay("2026-03-13").getDate(), 13, "same day of month");
+  assertEq(ymd(asDay("2026-03-13")), "2026-03-13", "round trip");
+});
+
+/* ---- extractor ---- */
+test("extracts a dated commitment", () => {
+  const r = mockExtract([TMsg("Sir laminate kal shaam tak site pe pahunch jayega", { at: new Date(2026, 2, 10, 18, 31) })]);
+  assertEq(r.promises.length, 1, "promise count");
+  const p = r.promises[0];
+  assertEq(p.dueOn, "2026-03-11", "due");
+  assertEq(p.object, "laminate", "object");
+  assertEq(p.category, "material", "category");
+  assertEq(p.direction, "they_owe", "direction");
+  assertEq(p.needsClarification, false, "no clarification needed");
+});
+
+test("a bare question is not a promise", () => {
+  assertEq(mockExtract([TMsg("kitchen kab tak ready hoga?")]).promises.length, 0, "question ignored");
+});
+
+test("an owner instruction is not an owner promise", () => {
+  assertEq(mockExtract([TMsg("haan aaj aa jao", { direction: "outbound" })]).promises.length, 0, "“aa jao” is an instruction");
+});
+
+test("the same commitment twice merges and adopts the late date", () => {
+  const m1 = TMsg("wardrobe fitting kar dunga", { id: "a", at: new Date(2026, 2, 10, 9, 0) });
+  const m2 = TMsg("wardrobe fitting kal tak pakka kar dunga", { id: "b", at: new Date(2026, 2, 10, 19, 0) });
+  const r = mockExtract([m1, m2]);
+  assertEq(r.promises.length, 1, "merged into one");
+  assertEq(r.promises[0].dueOn, "2026-03-11", "date adopted from the second message");
+  assertEq(r.promises[0].needsClarification, false, "clarification cleared");
+  assertEq(r.promises[0].sourceMessageIds.length, 2, "both sources kept");
+});
+
+test("an owner promise records who it was made to", () => {
+  const ask = TMsg("sir payment kab karoge?", { at: new Date(2026, 2, 10, 9, 0) });
+  const reply = TMsg("40,000 balance main 20th ko de dunga", { direction: "outbound", at: new Date(2026, 2, 10, 9, 5) });
+  const r = mockExtract([ask, reply]);
+  assertEq(r.promises.length, 1, "one promise");
+  const p = r.promises[0];
+  assertEq(p.direction, "we_owe", "direction");
+  assertEq(p.category, "payment", "category");
+  assertEq(p.recipientRaw, "Imran bhai", "recipient");
+  assertEq(p.dueOn, "2026-03-20", "due");
+  assertTrue(p.statement.indexOf("40,000") >= 0, "amount in statement: " + p.statement);
+});
+
+/* ---- closer ---- */
+test("a delivered message closes the promise it refers to", () => {
+  const m1 = TMsg("laminate kal shaam tak bhej dunga", { id: "m1", at: new Date(2026, 2, 10, 18, 31) });
+  const m2 = TMsg("laminate site pe pahunch gaya", { id: "m2", at: new Date(2026, 2, 11, 10, 0) });
+  const r = mockExtract([m1, m2]);
+  S.promises.push.apply(S.promises, r.promises);
+  const closed = mockClose([m1, m2], r.doneEvents);
+  assertEq(closed.length, 1, "closed count");
+  assertEq(S.promises[0].status, "done", "status");
+  assertEq(S.proofs.length, 1, "proof recorded");
+});
+
+test("a promise is never closed by its own words", () => {
+  const m = TMsg("laminate bhej diya, kal shaam tak pakka", { at: new Date(2026, 2, 10, 12, 0) });
+  const r = mockExtract([m]);
+  assertEq(r.promises.length, 1, "one promise");
+  S.promises.push.apply(S.promises, r.promises);
+  mockClose([m], []);
+  assertEq(S.promises[0].status, "open", "still open");
+});
+
+/* ---- scoring ---- */
+test("an unscored vendor is null, not zero", () => {
+  const c = contactFor("New Vendor", "vendor");
+  S.promises.push(TPromise(c.id, "open"));
+  const v = vendorScores()[0];
+  assertEq(v.reliability, null, "reliability");
+  assertEq(v.band, "unscored", "band");
+});
+
+test("one delivery stays provisional instead of scoring 0 or 100", () => {
+  const c = contactFor("Ravi Electrician", "vendor");
+  S.promises.push(TPromise(c.id, "done", { dueOn: ymd(new Date()), closedAt: nowIso() }));
+  const v = vendorScores()[0];
+  assertEq(v.provisional, true, "provisional");
+  assertNear(v.keptRate, 2 / 3, 0.001, "Laplace-smoothed kept rate");
+  assertEq(v.band, "provisional", "band");
+});
+
+test("a missed promise scores below an on-time delivery", () => {
+  const a = contactFor("Good Vendor", "vendor");
+  const b = contactFor("Bad Vendor", "vendor");
+  const today = ymd(new Date());
+  const good = TPromise(a.id, "done", { whoRaw: "Good Vendor", dueOn: today, closedAt: nowIso() });
+  S.promises.push(good);
+  S.proofs.push({ id: uid("pf"), promiseId: good.id, kind: "photo", verifiedBy: "agent", createdAt: nowIso() });
+  S.promises.push(TPromise(b.id, "missed", { whoRaw: "Bad Vendor" }));
+  const scores = vendorScores();
+  const g = scores.filter(x => x.name === "Good Vendor")[0];
+  const bad = scores.filter(x => x.name === "Bad Vendor")[0];
+  assertTrue(g.reliability > bad.reliability, "good " + g.reliability + " should beat bad " + bad.reliability);
+});
+
+test("only verified proof counts toward the proof rate", () => {
+  const c = contactFor("Painter Ramesh", "vendor");
+  const p = TPromise(c.id, "done", { whoRaw: "Painter Ramesh", dueOn: ymd(new Date()), closedAt: nowIso() });
+  S.promises.push(p);
+  S.proofs.push({ id: uid("pf"), promiseId: p.id, kind: "text_claim", verifiedBy: "owner", createdAt: nowIso() });
+  assertEq(vendorScores()[0].proofRate, 0, "self-attestation is not proof");
+  assertEq(vendorScores()[0].attested, 1, "attestation counted separately");
+  S.proofs.push({ id: uid("pf"), promiseId: p.id, kind: "photo", verifiedBy: "agent", createdAt: nowIso() });
+  assertEq(vendorScores()[0].proofRate, 1, "a photo is proof");
+});
+
+test("responsiveness is only measured once a follow-up was sent", () => {
+  const c = contactFor("Imran bhai", "vendor");
+  const p = TPromise(c.id, "done", { whoRaw: "Imran bhai", dueOn: ymd(new Date()), closedAt: nowIso() });
+  S.promises.push(p);
+  assertEq(vendorScores()[0].measured.indexOf("response"), -1, "not measured yet");
+  const f = { id: uid("fu"), promiseId: p.id, attempt: 1, tone: "warm", status: "sent", answered: false,
+    draftText: "x", createdAt: nowIso(), sentAt: nowIso(), whoName: "Imran bhai", channel: "whatsapp" };
+  S.followUps.push(f);
+  assertTrue(vendorScores()[0].measured.indexOf("response") >= 0, "now measured");
+  assertEq(vendorScores()[0].responseRate, 0, "sent but unanswered");
+  f.answered = true;
+  assertEq(vendorScores()[0].responseRate, 1, "answered");
+});
+
+/* ---- chaser & aging ---- */
+test("follow-up tone escalates with how late the promise is", () => {
+  for (const pair of [[1, 1], [4, 2], [6, 3]]) {
+    const c = contactFor("Vendor " + pair[0], "vendor");
+    const p = TPromise(c.id, "open", { whoRaw: "Vendor " + pair[0], dueOn: ymd(addDays(new Date(), -pair[0])) });
+    S.promises.push(p);
+    planFollowUps();
+    const f = S.followUps.filter(x => x.promiseId === p.id);
+    assertEq(f.length, 1, pair[0] + "d overdue: one draft");
+    assertEq(f[0].attempt, pair[1], pair[0] + "d overdue: attempt");
+  }
+});
+
+test("aging flags a promise as missed without pretending it was delivered", () => {
+  const c = contactFor("Imran bhai", "vendor");
+  const p = TPromise(c.id, "open", { dueOn: ymd(addDays(new Date(), -10)) });
+  S.promises.push(p);
+  const aged = refreshStatuses();
+  assertEq(aged.length, 1, "aged count");
+  assertEq(p.status, "missed", "status");
+  assertEq(p.autoMissed, true, "autoMissed flag");
+  assertEq(p.closedAt, null, "no closure time without delivery");
+  assertEq(p.closedBy, "agent:aging", "actor");
+  assertEq(S.events[0].kind, "auto_missed", "event logged");
+});
+
+test("the chaser keeps working on a promise aging gave up on", () => {
+  const c = contactFor("Imran bhai", "vendor");
+  const p = TPromise(c.id, "open", { dueOn: ymd(addDays(new Date(), -10)) });
+  S.promises.push(p);
+  refreshStatuses();
+  assertEq(p.status, "missed", "missed");
+  assertEq(planFollowUps(), 1, "still chased");
+  assertEq(S.followUps[0].tone, "firm", "firm tone at ten days");
+});
+
+test("a promise is never chased more than three times", () => {
+  const c = contactFor("Imran bhai", "vendor");
+  const p = TPromise(c.id, "open", { dueOn: ymd(addDays(new Date(), -6)) });
+  S.promises.push(p);
+  for (let i = 1; i <= 3; i++) {
+    S.followUps.push({ id: uid("fu"), promiseId: p.id, attempt: i, tone: "warm", status: "sent",
+      answered: false, draftText: "x", createdAt: nowIso(), sentAt: nowIso(),
+      whoName: "Imran bhai", channel: "whatsapp" });
+  }
+  assertEq(planFollowUps(), 0, "no fourth draft");
+});
+
+/* ---- dates typed by the owner ---- */
+test("a date can be typed the way people actually talk", () => {
+  assertEq(parseDateAnswer("2026-01-05"), "2026-01-05", "ISO date");
+  assertEq(parseDateAnswer("kal"), ymd(addDays(new Date(), 1)), "kal");
+  assertEq(parseDateAnswer("banana"), null, "junk rejected");
+});
+
+/* ---- data safety ---- */
+test("an older backup is migrated, not rejected", () => {
+  const s = migrate({ meta: { business: "X", owner: "Y" }, contacts: [], messages: [],
+    promises: [{ id: "p1", statement: "Deliver the ply", status: "open" }] });
+  assertEq(s.version, STATE_VERSION, "version");
+  assertTrue(Array.isArray(s.events), "events array added");
+  assertTrue(Array.isArray(s.scoreHistory), "scoreHistory added");
+  assertTrue(Array.isArray(s.promises[0].sourceMessageIds), "promise repaired");
+  assertEq(s.meta.owner, "Y", "owner preserved");
+});
+
+test("a bad import is refused instead of wiping the ledger", () => {
+  assertEq(validateBackup({ hello: "world" }), null, "junk object");
+  assertEq(validateBackup([1, 2, 3]), null, "array");
+  assertEq(validateBackup(null), null, "null");
+  assertTrue(validateBackup({ promises: [], messages: [], contacts: [] }) !== null, "real shape accepted");
+});
+
+test("score snapshots are written once per vendor per day", () => {
+  const c = contactFor("Imran bhai", "vendor");
+  S.promises.push(TPromise(c.id, "done", { dueOn: ymd(new Date()), closedAt: nowIso() }));
+  snapshotScores();
+  assertEq(S.scoreHistory.length, 1, "one snapshot");
+  snapshotScores();
+  assertEq(S.scoreHistory.length, 1, "not duplicated");
+});
+
+test("the SQL export covers the core tables and has no holes", () => {
+  const c = contactFor("Imran bhai", "vendor");
+  const p = TPromise(c.id, "done", { dueOn: ymd(new Date()), closedAt: nowIso() });
+  S.promises.push(p);
+  S.conversations.push({ id: "cv1", channel: "whatsapp", kind: "group", title: "T", source: "export" });
+  S.messages.push(TMsg("hello", { id: "m1" }));
+  S.followUps.push({ id: "fu1", promiseId: p.id, attempt: 1, tone: "warm", status: "queued",
+    draftText: "x", createdAt: nowIso(), sentAt: null, whoName: "Imran bhai", channel: "whatsapp" });
+  S.proofs.push({ id: "pf1", promiseId: p.id, kind: "photo", verifiedBy: "agent", createdAt: nowIso() });
+  S.events.push({ id: "ev1", promiseId: p.id, kind: "fulfilled", detail: "x", actor: "agent", at: nowIso() });
+  const sql = sqlFor();
+  for (const table of ["businesses", "contacts", "vendors", "conversations", "messages",
+                       "promises", "promise_events", "follow_ups", "proofs"]) {
+    assertTrue(sql.indexOf("INSERT INTO " + table + " ") >= 0, "missing table: " + table);
+  }
+  assertTrue(sql.indexOf("undefined") === -1, "undefined leaked into the SQL");
+  assertTrue(sql.indexOf("NaN") === -1, "NaN leaked into the SQL");
+  for (const line of sql.split("\n")) {
+    if (line.indexOf("INSERT INTO") === 0) {
+      assertTrue(line.slice(-2) === ");", "unterminated statement: " + line.slice(0, 70));
+    }
+  }
+});
+
+test("the ledger filter narrows without touching the data", () => {
+  const a = contactFor("Imran bhai", "vendor");
+  const b = contactFor("Ravi Electrician", "vendor");
+  S.promises.push(TPromise(a.id, "open", { statement: "Deliver the laminate to site", whoRaw: "Imran bhai" }));
+  S.promises.push(TPromise(b.id, "done", { statement: "Conceal the kitchen wiring", whoRaw: "Ravi Electrician", dueOn: ymd(new Date()), closedAt: nowIso() }));
+  const before = JSON.stringify(S.promises);
+  view.q = "laminate";
+  assertEq(visiblePromises().length, 1, "search narrows");
+  view.q = "";
+  view.status = "done";
+  assertEq(visiblePromises().length, 1, "status filter");
+  view.status = "all";
+  view.dir = "we_owe";
+  assertEq(visiblePromises().length, 0, "direction filter");
+  view.dir = "all";
+  assertEq(visiblePromises().length, 2, "filter cleared");
+  assertEq(JSON.stringify(S.promises), before, "data untouched");
+});
+
+/* ---- cloud sync ---- */
+test("a pushed row carries the business it is pushed for", () => {
+  const c = contactFor("Imran bhai", "vendor");
+  S.promises.push(TPromise(c.id, "open", { object: "ply" }));
+  const rows = rowObjects("promises", "biz_abc");
+  assertEq(rows.length, 1, "one promise");
+  assertEq(rows[0].business_id, "biz_abc", "business id");
+  assertTrue(typeof rows[0].id === "string" && rows[0].id.length > 3, "row id kept");
+  assertEq(rows[0].object, "ply", "object column is written");
+  assertEq(rowObjects("promises")[0].business_id, "biz_local", "the SQL export keeps its friendly id");
+});
+
+test("two businesses never collide on a primary key", () => {
+  const b1 = rowObjects("businesses", "biz_one")[0];
+  const b2 = rowObjects("businesses", "biz_two")[0];
+  assertTrue(b1.id !== b2.id, "business ids differ");
+  assertTrue(rowObjects("projects", "biz_one")[0].id !== rowObjects("projects", "biz_two")[0].id,
+    "project ids differ too — they are primary keys in one shared database");
+});
+
+test("a promise survives a trip through a database row", () => {
+  const c = contactFor("Imran bhai", "vendor");
+  const p = TPromise(c.id, "missed", { object: "ply", statement: "Deliver the ply to site" });
+  p.dedupeKey = "k|1"; p.attempts = 3; p.reschedules = 2; p.autoMissed = true;
+  p.dueOn = "2026-03-11"; p.closedBy = "agent:aging";
+  p.updatedAt = "2026-03-18T10:00:00.000Z";
+  S.promises.push(p);
+
+  const back = HYDRATE.promises(rowObjects("promises", "biz_x")[0]);
+  assertEq(back.object, "ply", "object");
+  assertEq(back.dedupeKey, "k|1", "de-duplication still works after a round trip");
+  assertEq(back.attempts, 3, "attempts");
+  assertEq(back.reschedules, 2, "reschedules");
+  assertEq(back.autoMissed, true, "auto-missed survives");
+  assertEq(back.status, "missed", "status");
+  assertEq(back.dueOn, "2026-03-11", "due date");
+  assertEq(back.updatedAt, "2026-03-18T10:00:00.000Z", "the sync clock");
+
+  /* A row from an older writer has no key; it must still be matchable, or the
+     same promise said twice becomes two promises after a round trip. */
+  const row = rowObjects("promises", "biz_x")[0];
+  row.dedupe_key = null;
+  const rebuilt = HYDRATE.promises(row);
+  assertEq(rebuilt.dedupeKey, "vendor|Imran bhai|material|ply", "key rebuilt from the columns");
+});
+
+test("a push writes parents before children", () => {
+  /* Every table has to exist, or the comparison below is between two -1s. */
+  const c = contactFor("Imran bhai", "vendor");
+  S.conversations.push({ id: "cv_test", channel: "whatsapp", kind: "group", source: "export", createdAt: nowIso() });
+  S.messages.push(TMsg("laminate kal shaam tak", {}));
+  S.promises.push(TPromise(c.id, "open"));
+  logEvent(S.promises[0].id, "extracted", "x", "agent:extractor");
+  S.followUps.push({ id: uid("fu"), promiseId: S.promises[0].id, attempt: 1, channel: "whatsapp",
+    tone: "warm", status: "queued", draftText: "hello", createdAt: nowIso() });
+  S.proofs.push({ id: uid("pf"), promiseId: S.promises[0].id, kind: "photo",
+    verifiedBy: "agent", description: "photo", createdAt: nowIso() });
+
+  const plan = cloudPushPlan("biz_x");
+  const order = [];
+  for (const step of plan) if (order.indexOf(step.table) < 0) order.push(step.table);
+  assertEq(order[0], "businesses", "business first");
+  assertTrue(order.indexOf("projects") < order.indexOf("contacts"), "projects before contacts");
+  assertTrue(order.indexOf("messages") < order.indexOf("promises"), "messages before promises");
+  assertTrue(order.indexOf("promises") < order.indexOf("promise_events"), "promises before events");
+  assertTrue(plan.length > 0, "something to send");
+  assertTrue(plan[0].path.indexOf("on_conflict=id") > 0, "upsert keyed on id");
+  assertTrue(plan[0].headers.Prefer.indexOf("merge-duplicates") >= 0, "merge, never insert-or-fail");
+});
+
+test("a pull takes newer rows and keeps yours on a tie", () => {
+  const c = contactFor("Imran bhai", "vendor");
+  const p = TPromise(c.id, "open", { statement: "Delivery" });
+  p.updatedAt = "2026-03-18T12:00:00.000Z";
+  S.promises.push(p);
+
+  const base = { business_id: "b", project_id: "p", conversation_id: null, source_message_id: null,
+    who_contact_id: c.id, who_raw: "Imran bhai", who_role: "vendor", direction: "they_owe",
+    category: "material", object: "ply", dedupe_key: "k", source_quote: "q", promised_at: null,
+    attempts: 0, reschedules: 0, auto_missed: 0, due_on: null, due_raw: null, due_confidence: null,
+    confidence: 0.8, needs_clarification: 0, clarifying_question: null, closed_at: null, closed_by: null,
+    created_at: "2026-03-10T00:00:00.000Z" };
+
+  const older = mergeRemote({ promises: [Object.assign({}, base, {
+    id: p.id, statement: "STALE", status: "done", updated_at: "2026-03-11T00:00:00.000Z" })] });
+  assertEq(older.kept, 1, "an older remote row is ignored");
+  assertEq(S.promises[0].statement, "Delivery", "the local promise is untouched");
+
+  const newer = mergeRemote({ promises: [Object.assign({}, base, {
+    id: p.id, statement: "NEWER", status: "done", updated_at: "2026-03-19T00:00:00.000Z" })] });
+  assertEq(newer.updated, 1, "a newer remote row wins");
+  assertEq(S.promises[0].status, "done", "status taken from the newer copy");
+  assertEq(S.promises[0].statement, "NEWER", "statement taken from the newer copy");
+});
+
+test("a backup never carries a session or an anon key", () => {
+  const prevCfg = store.getItem("vachan.cloud.config.v1");
+  const prevSess = store.getItem("vachan.cloud.session.v1");
+  try {
+    saveCloudConfig({ url: "https://x.supabase.co", anonKey: "ANON_SENTINEL", businessId: "biz_1" });
+    saveCloudSession({ accessToken: "TOKEN_SENTINEL", refreshToken: "REFRESH_SENTINEL", userId: "u1" });
+    const backup = JSON.stringify(S) + JSON.stringify(sqlFor());
+    assertTrue(backup.indexOf("TOKEN_SENTINEL") < 0, "no access token in a backup");
+    assertTrue(backup.indexOf("REFRESH_SENTINEL") < 0, "no refresh token in a backup");
+    assertTrue(backup.indexOf("ANON_SENTINEL") < 0, "no key in a backup");
+    assertEq(cloudConfig().businessId, "biz_1", "the connection is stored separately");
+  } finally {
+    /* Put the machine back exactly as it was: a test must never disconnect a
+       real project the way it must never touch real promises. */
+    if (prevCfg === null) { try { store.removeItem("vachan.cloud.config.v1"); } catch (e) {} }
+    else { try { store.setItem("vachan.cloud.config.v1", prevCfg); } catch (e) {} }
+    if (prevSess === null) clearCloudSession();
+    else { try { store.setItem("vachan.cloud.session.v1", prevSess); } catch (e) {} }
+  }
+});
+
+function runSelfTest() {
+  const saved = S;
+  const results = TESTS.map(t => {
+    S = blankState();
+    view.q = ""; view.status = "all"; view.dir = "all";
+    try {
+      t.fn();
+      return { name: t.name, ok: true, error: "" };
+    } catch (e) {
+      return { name: t.name, ok: false, error: String((e && e.message) || e) };
+    } finally {
+      S = saved;
+    }
+  });
+  const passed = results.filter(r => r.ok).length;
+  const summary = { passed: passed, total: results.length, results: results, at: nowIso() };
+  window.__vachanTests = summary;
+  const node = $("#testSummary");
+  if (node) node.textContent = passed + " / " + results.length + " passed" + (passed === results.length ? "" : " — see the failures below");
+  const panel = $("#testResults");
+  if (panel) {
+    panel.innerHTML = '<div class="card" style="padding:0;overflow:auto"><table><thead><tr><th></th><th>Test</th><th>Detail</th></tr></thead><tbody>' +
+      results.map(r => "<tr><td>" + (r.ok ? '<span class="pill done">pass</span>' : '<span class="pill overdue">fail</span>') +
+        "</td><td>" + esc(r.name) + "</td><td class='note'>" + esc(r.ok ? "" : r.error) + "</td></tr>").join("") +
+      "</tbody></table></div>";
+  }
+  return summary;
+}
+
+/* boot */
+loadState();
+if (!S.messages.length) {
+  seed();
+  const boot = async () => { await runPipeline(S.messages.slice(), []); planFollowUps(); render(); };
+  boot().catch(() => render());
+  alertBox("", "This is the local demo: a sample interior-design business was loaded and run through the whole pipeline. Press <b>Reset</b> and paste your own chat in <b>Inbox</b> any time.");
+} else {
+  render();
+}
+/* expose for quick console poking / tests */
+window.Vachan = {
+  get state() { return S; },
+  seed: seedAndRun,
+  test: runSelfTest,
+  tests: TESTS,
+  planFollowUps: planFollowUps,
+  refreshStatuses: refreshStatuses,
+  vendorScores: vendorScores,
+  snapshotScores: snapshotScores,
+  mockExtract: mockExtract,
+  parseChatText: parseChatText,
+  simulateReplies: simulateReplies,
+  sqlFor: sqlFor,
+  migrate: migrate,
+  validateBackup: validateBackup,
+  rowObjects: rowObjects,
+  tableRows: tableRows,
+  mergeRemote: mergeRemote,
+  HYDRATE: HYDRATE,
+  cloudConfig: cloudConfig,
+  saveCloudConfig: saveCloudConfig,
+  cloudSession: cloudSession,
+  saveCloudSession: saveCloudSession,
+  clearCloudSession: clearCloudSession,
+  cloudPush: cloudPush,
+  cloudPull: cloudPull,
+  renderCloud: renderCloud
+};
+</script>
+</body>
+</html>

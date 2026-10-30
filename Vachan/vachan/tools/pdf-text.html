@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Read a compressed PDF — no shell needed</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0e1116;color:#e6ebf2;margin:0;padding:24px;line-height:1.5}
+  h1{font-size:18px;margin:0 0 4px}
+  p.note{color:#8b98ab;font-size:13px;max-width:70ch}
+  #drop{border:2px dashed #26303f;border-radius:10px;padding:34px;text-align:center;color:#8b98ab;margin:16px 0;background:#151a22;cursor:pointer}
+  #drop.over{border-color:#ffb454;color:#ffb454}
+  button{background:#1b2230;color:#e6ebf2;border:1px solid #26303f;border-radius:7px;padding:8px 13px;cursor:pointer;font-size:13px;margin-right:8px}
+  button.primary{background:#ffb454;color:#20160a;border-color:#ffb454;font-weight:600}
+  pre{background:#0b0e13;border:1px solid #26303f;border-radius:8px;padding:14px;white-space:pre-wrap;font-size:12.5px;max-height:60vh;overflow:auto}
+  .ok{color:#3ddc97}.bad{color:#ff6b6b}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+</style>
+</head>
+<body>
+<h1>Read a compressed PDF — no shell needed</h1>
+<p class="note">
+  For PDFs whose page text is stored in ASCII85 + Flate compressed streams (ReportLab,
+  and most generated PDFs). Nothing is uploaded: the file is read in your browser with
+  the File API. Drop the PDF below and the extracted text appears here.
+</p>
+
+<div id="drop">Drop the PDF here — or click to choose a file</div>
+<input type="file" id="file" accept="application/pdf,application/octet-stream" style="display:none">
+<button class="primary" id="selftest">Run self-test</button>
+<button id="copy">Copy all text</button>
+<button id="save">Save as .txt</button>
+<div id="status" class="note" style="margin-top:12px"></div>
+<pre id="out">Not run yet.</pre>
+
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+
+/* ---------- ASCII85 ---------- */
+function ascii85(str) {
+  const bytes = [];
+  let acc = 0, n = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str[i];
+    if (c === "~") break;
+    if (/\s/.test(c)) continue;
+    if (c === "z" && n === 0) { bytes.push(0, 0, 0, 0); continue; }
+    const v = c.charCodeAt(0) - 33;
+    if (v < 0 || v > 84) continue;
+    acc = acc * 85 + v;
+    if (++n === 5) {
+      bytes.push(Math.floor(acc / 16777216) % 256, Math.floor(acc / 65536) % 256,
+                 Math.floor(acc / 256) % 256, acc % 256);
+      acc = 0; n = 0;
+    }
+  }
+  if (n > 0) {
+    for (let k = n; k < 5; k++) acc = acc * 85 + 84;
+    const b = [Math.floor(acc / 16777216) % 256, Math.floor(acc / 65536) % 256,
+               Math.floor(acc / 256) % 256, acc % 256];
+    for (let k = 0; k < n - 1; k++) bytes.push(b[k]);
+  }
+  return new Uint8Array(bytes);
+}
+
+function ascii85Encode(bytes) {
+  let out = "";
+  for (let i = 0; i < bytes.length; i += 4) {
+    const chunk = bytes.slice(i, i + 4);
+    const pad = 4 - chunk.length;
+    let value = 0;
+    for (let k = 0; k < 4; k++) value = value * 256 + (chunk[k] || 0);
+    if (value === 0 && pad === 0) { out += "z"; continue; }
+    const enc = new Array(5);
+    for (let k = 4; k >= 0; k--) { enc[k] = String.fromCharCode((value % 85) + 33); value = Math.floor(value / 85); }
+    out += enc.join("").slice(0, 5 - pad);
+  }
+  return out + "~>";
+}
+
+/* ---------- Flate ---------- */
+async function inflate(bytes) {
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function deflate(text) {
+  const stream = new Blob([new TextEncoder().encode(text)]).stream().pipeThrough(new CompressionStream("deflate"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+/* ---------- PDF text ---------- */
+function unescapePdf(s) {
+  return s.replace(/\\(n|r|t|b|f|\(|\)|\\|[0-7]{1,3})/g, (m, g) => {
+    switch (g) {
+      case "n": return "\n"; case "r": return "\r"; case "t": return "\t";
+      case "b": return "\b"; case "f": return "\f";
+      case "(": return "(";  case ")": return ")"; case "\\": return "\\";
+    }
+    return String.fromCharCode(parseInt(g, 8));
+  });
+}
+
+function extractPageText(content) {
+  let out = "", line = "", i = 0;
+  const flush = () => { out += line.replace(/\s+$/, "") + "\n"; line = ""; };
+  while (i < content.length) {
+    const ch = content[i];
+    if (ch === "(") {
+      let j = i + 1, depth = 1, buf = "";
+      while (j < content.length) {
+        const c = content[j];
+        if (c === "\\") { buf += c + (content[j + 1] || ""); j += 2; continue; }
+        if (c === "(") depth++;
+        if (c === ")") { depth--; if (depth === 0) break; }
+        buf += c; j++;
+      }
+      line += unescapePdf(buf);
+      i = j + 1;
+      continue;
+    }
+    if (ch === "\n") { flush(); i++; continue; }
+    i++;
+  }
+  flush();
+  return out;
+}
+
+async function readPdf(bytes) {
+  const raw = new TextDecoder("latin1").decode(bytes);
+  const re = /stream\r?\n([\s\S]*?)endstream/g;
+  const pages = [];
+  let match;
+  while ((match = re.exec(raw)) !== null) {
+    const chunk = match[1];
+    let inflated = null;
+    // ReportLab and friends write ASCII85-then-Flate; other producers write
+    // plain Flate. Try both, and skip anything that is neither (images, fonts).
+    if (/^\s*G/.test(chunk)) {
+      try { inflated = await inflate(ascii85(chunk)); } catch (e) { inflated = null; }
+    }
+    if (!inflated) {
+      try { inflated = await inflate(Uint8Array.from(chunk, (c) => c.charCodeAt(0) & 0xff)); }
+      catch (e) { continue; }
+    }
+    const text = extractPageText(new TextDecoder("latin1").decode(inflated)).trim();
+    if (text) pages.push(text);
+  }
+  return pages;
+}
+
+/* ---------- UI ---------- */
+let lastText = "";
+
+async function handleFile(file) {
+  $("#status").innerHTML = "Reading <b>" + file.name + "</b> (" + Math.round(file.size / 1024) + " KB)…";
+  try {
+    const pages = await readPdf(new Uint8Array(await file.arrayBuffer()));
+    lastText = pages.map((t, i) => "===== PAGE " + (i + 1) + " =====\n" + t).join("\n\n");
+    $("#out").textContent = lastText || "No text streams found in this PDF.";
+    $("#status").innerHTML = '<span class="ok">' + pages.length + " page(s) of text extracted from " +
+      file.name + "</span>";
+  } catch (e) {
+    $("#status").innerHTML = '<span class="bad">Failed: ' + String(e && e.message || e) + "</span>";
+  }
+}
+
+const drop = $("#drop");
+drop.addEventListener("click", () => $("#file").click());
+$("#file").addEventListener("change", (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("over")));
+drop.addEventListener("drop", (e) => { e.preventDefault(); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+$("#copy").addEventListener("click", () => navigator.clipboard.writeText(lastText));
+$("#save").addEventListener("click", () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([lastText], { type: "text/plain" }));
+  a.download = "extracted.txt";
+  a.click();
+});
+
+/* Proves the decode path works on this machine before you trust it on a PDF:
+   text -> deflate -> ASCII85 -> [this page's decoder] -> inflate -> text. */
+$("#selftest").addEventListener("click", async () => {
+  const samples = [
+    "Vachan self-test — kal shaam tak ✓",
+    "short",
+    "A".repeat(300),
+    "line one\nline two\tTabbed (parens) \\ backslash"
+  ];
+  const results = [];
+  for (const text of samples) {
+    try {
+      const encoded = ascii85Encode(await deflate(text));
+      const roundTrip = new TextDecoder().decode(await inflate(ascii85(encoded)));
+      results.push([roundTrip === text, text.length + " chars"]);
+    } catch (e) {
+      results.push([false, String(e && e.message || e)]);
+    }
+  }
+  const allOk = results.every((r) => r[0]);
+  $("#out").textContent = "SELF-TEST (ASCII85 decode + Flate inflate round-trip)\n\n" +
+    results.map((r, i) => (r[0] ? "  pass " : "  FAIL ") + "sample " + (i + 1) + " — " + r[1]).join("\n") +
+    "\n\n" + (allOk
+      ? "Decoder verified. Drop a PDF above — if it finds no text, the page streams are not ASCII85+Flate."
+      : "Decoder failed: do NOT trust PDF output from this page.");
+  $("#status").innerHTML = allOk ? '<span class="ok">self-test passed</span>'
+                                 : '<span class="bad">self-test FAILED</span>';
+});
+
+// Run it once on load so the page states its own trustworthiness.
+window.addEventListener("load", () => $("#selftest").click());
+</script>
+</body>
+</html>
